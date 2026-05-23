@@ -1,0 +1,64 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+    import panzoom from "https://cdn.jsdelivr.net/npm/@panzoom/panzoom@4.5.1/dist/panzoom.min.js";
+
+    // Initialize Mermaid
+    mermaid.initialize({ startOnLoad: true });
+
+    window.addEventListener("load", () => {
+      const svg = document.querySelector(".mermaid svg");
+      if (svg) {
+        const pz = panzoom(svg, { maxScale: 3, minScale: 0.5 });
+        document.getElementById("zoomIn").onclick = () => pz.zoomIn();
+        document.getElementById("zoomOut").onclick = () => pz.zoomOut();
+        document.getElementById("resetZoom").onclick = () => pz.reset();
+      }
+    });
+  </script>
+</head>
+<body>
+
+<div style="margin-bottom:10px;">
+  <button id="zoomIn">➕ Zoom In</button>
+  <button id="zoomOut">➖ Zoom Out</button>
+  <button id="resetZoom">🔁 Reset</button>
+</div>
+
+<div class="mermaid" style="border:1px solid #ccc; width:100%; height:auto;">
+%%{init: {"themeVariables": { "fontSize": "16px" }, "flowchart": {"curve": "basis", "htmlLabels": true, "diagramPadding": 40, "useMaxWidth": false}} }%%
+flowchart LR
+    Client["💻 Client Application"]
+    Gateway["🛡️ API Gateway"]
+    IPFilter["🌐 IP Filtering<br/>(Allow/Deny based on IP)"]
+    RateLimit["🚦 Rate Limiter<br/>(Limit requests per time window)"]
+    Throttle["⏳ Throttler<br/>(Delay excess requests)"]
+    Backend["(⚙️ Backend Service)"]
+    Logs["(📜 Monitoring & Logs)"]
+
+    Client -->|Request| Gateway
+    Gateway --> IPFilter
+    IPFilter -->|Allowed| RateLimit
+    IPFilter -.->|Blocked IPs| Logs
+    RateLimit -->|Within limit| Throttle
+    RateLimit -.->|429 Too Many Requests| Logs
+    Throttle -->|Processed| Backend
+    Backend -->|Response| Client
+    Backend --> Logs
+
+    %% Styling
+    style Client fill:#d9e1f2,stroke:#0070c0,stroke-width:1.5px,color:black;
+    style Gateway fill:#e2f0d9,stroke:#70ad47,stroke-width:2px,color:black;
+    style IPFilter fill:#fff2cc,stroke:#ffc000,stroke-width:2px,color:black;
+    style RateLimit fill:#fce4d6,stroke:#e26b0a,stroke-width:2px,color:black;
+    style Throttle fill:#ddebf7,stroke:#5b9bd5,stroke-width:2px,color:black;
+    style Backend fill:#d5f5e3,stroke:#4CAF50,stroke-width:2px,color:black;
+    style Logs fill:#f4cccc,stroke:#c00000,stroke-width:1.5px,color:black;
+</div>
+
+</body>
+
+</html>
