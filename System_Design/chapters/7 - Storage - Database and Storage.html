@@ -8,14 +8,674 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-<link rel="stylesheet" href="assets/system-design.css">
+<link rel="stylesheet" href="../assets/system-design.css">
+<style>
+/* ============================== Chapter 7 — Custom Diagrams ============================== */
+
+/* ----- Triad (3-node triangle) — used for Scalability/Reliability/Performance ----- */
+.triad {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  aspect-ratio: 1 / 0.95;
+  margin: 28px auto;
+  background: linear-gradient(180deg, var(--bg-elevated), var(--bg-muted));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+.triad-node {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+  border: 3px solid;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition), box-shadow var(--transition);
+  z-index: 2;
+}
+.triad-node:hover { transform: scale(1.06); box-shadow: var(--shadow-lg); }
+.triad-node .triad-icon { font-size: 20px; margin-bottom: 4px; }
+.triad-node.top    { top: 6%;  left: 50%; transform: translateX(-50%); background: var(--primary-faint); border-color: var(--primary); color: var(--primary); }
+.triad-node.left   { bottom: 8%; left: 5%; background: var(--accent-faint); border-color: var(--accent); color: var(--accent); }
+.triad-node.right  { bottom: 8%; right: 5%; background: var(--success-faint); border-color: var(--success); color: var(--success); }
+.triad-node.top:hover    { transform: translateX(-50%) scale(1.06); }
+.triad-line {
+  position: absolute;
+  height: 2px;
+  background: var(--border-strong);
+  z-index: 1;
+  transform-origin: 0 50%;
+}
+.triad-line::before, .triad-line::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 0; height: 0;
+  border: 5px solid transparent;
+}
+.triad-line::before { left: -1px; transform: translateY(-50%); border-right-color: var(--primary); border-left: 0; }
+.triad-line::after  { right: -1px; transform: translateY(-50%); border-left-color: var(--primary); border-right: 0; }
+
+/* ----- CAP Venn Diagram ----- */
+.cap-venn {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  aspect-ratio: 1 / 0.95;
+  margin: 28px auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.cap-circle {
+  position: absolute;
+  width: 56%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 12%;
+  text-align: center;
+  mix-blend-mode: multiply;
+  border: 2px solid;
+  transition: transform var(--transition);
+}
+[data-theme="dark"] .cap-circle { mix-blend-mode: screen; }
+.cap-circle:hover { transform: scale(1.02); z-index: 5; }
+.cap-circle.c { top: 2%;  left: 22%; background: rgba(16, 185, 129, 0.35); border-color: var(--success); }
+.cap-circle.a { bottom: 4%; left: 2%;  background: rgba(37, 99, 235, 0.35); border-color: var(--primary); }
+.cap-circle.p { bottom: 4%; right: 2%; background: rgba(245, 158, 11, 0.35); border-color: var(--accent); }
+.cap-circle .cap-name { font-weight: 800; font-size: 17px; color: var(--text); }
+.cap-circle .cap-desc { font-size: 11.5px; color: var(--text-muted); line-height: 1.35; padding: 6px 12% 0; }
+.cap-tag {
+  position: absolute;
+  background: var(--bg);
+  border: 1.5px solid var(--border-strong);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  z-index: 4;
+  box-shadow: var(--shadow-sm);
+  color: var(--text);
+}
+.cap-tag.ca { top: 36%; left: 30%; color: var(--primary); border-color: var(--primary); }
+.cap-tag.cp { top: 36%; right: 30%; color: var(--success); border-color: var(--success); }
+.cap-tag.ap { bottom: 18%; left: 50%; transform: translateX(-50%); color: var(--accent); border-color: var(--accent); }
+.cap-tag.x  { top: 47%; left: 50%; transform: translate(-50%, -50%); color: var(--danger); border-color: var(--danger); background: var(--danger-faint); }
+
+/* ----- SQL schema (3 fake table cards joined) ----- */
+.sql-schema {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 24px;
+  background: linear-gradient(180deg, var(--bg-elevated), var(--bg-muted));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin: 28px 0;
+  position: relative;
+}
+.sql-table {
+  background: var(--bg);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.sql-table:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--primary); }
+.sql-table-header {
+  background: linear-gradient(135deg, var(--primary), #4f46e5);
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 6px;
+}
+.sql-row {
+  padding: 7px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 6px;
+}
+.sql-row:last-child { border-bottom: none; }
+.sql-row.pk { color: var(--primary); font-weight: 700; background: var(--primary-faint); }
+.sql-row.fk { color: var(--accent); font-weight: 600; }
+.sql-row .key-icon { font-size: 11px; opacity: 0.8; }
+.sql-join {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  margin-top: 8px;
+}
+
+/* ----- NoSQL types card grid (rich version) ----- */
+.nosql-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+.nosql-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.nosql-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+}
+.nosql-card.kv::before     { background: linear-gradient(90deg, var(--primary), var(--accent)); }
+.nosql-card.doc::before    { background: linear-gradient(90deg, var(--success), var(--primary)); }
+.nosql-card.col::before    { background: linear-gradient(90deg, var(--accent), var(--danger)); }
+.nosql-card.graph::before  { background: linear-gradient(90deg, var(--primary), var(--success)); }
+.nosql-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
+}
+.nosql-visual {
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  gap: 6px;
+}
+/* Key-Value mini-diagram */
+.kv-pair { display: flex; align-items: center; gap: 4px; }
+.kv-pair + .kv-pair { margin-top: 4px; }
+.kv-k {
+  background: var(--accent); color: white;
+  padding: 3px 7px; border-radius: 4px;
+  font-weight: 700; font-size: 11px;
+}
+.kv-arrow { color: var(--text-faint); font-size: 12px; }
+.kv-v {
+  background: var(--primary); color: white;
+  padding: 3px 9px; border-radius: 999px;
+  font-weight: 700; font-size: 11px;
+}
+.nosql-visual.kv-viz { flex-direction: column; gap: 4px; align-items: flex-start; padding-left: 25%; }
+/* Document mini-tree */
+.doc-tree {
+  position: relative; width: 90px; height: 80px;
+}
+.doc-node { position: absolute; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); border: 2px solid var(--bg); }
+.doc-node.root { top: 0; left: 50%; transform: translateX(-50%); background: var(--success); }
+.doc-node.l1   { top: 35px; left: 18%; }
+.doc-node.l2   { top: 35px; right: 18%; }
+.doc-node.l3   { top: 65px; left: 0; background: var(--success); }
+.doc-node.l4   { top: 65px; right: 0; background: var(--success); }
+.doc-line {
+  position: absolute;
+  background: var(--border-strong);
+  height: 2px;
+  transform-origin: 0 50%;
+}
+/* Column store mini-grid */
+.col-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 18px);
+  grid-template-rows: repeat(3, 18px);
+  gap: 3px;
+}
+.col-cell { background: var(--accent-faint); border: 1px solid var(--accent); border-radius: 2px; }
+.col-cell.hi { background: var(--accent); }
+/* Graph mini */
+.graph-mini { position: relative; width: 90px; height: 80px; }
+.graph-mini .g-node { position: absolute; width: 18px; height: 18px; border-radius: 50%; background: var(--primary); border: 2px solid var(--bg); }
+.graph-mini .g-node.n1 { top: 8px; left: 8px; background: var(--success); }
+.graph-mini .g-node.n2 { top: 8px; right: 8px; }
+.graph-mini .g-node.n3 { bottom: 8px; left: 50%; transform: translateX(-50%); background: var(--success); }
+
+.nosql-card .nosql-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+.nosql-card .nosql-sub   { font-size: 12px; color: var(--text-muted); }
+
+/* ----- Replication diagram (primary/replicas with cylinders) ----- */
+.replica-arch {
+  background: linear-gradient(180deg, var(--bg-elevated), var(--bg-muted));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 24px;
+  margin: 28px 0;
+}
+.repl-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 22px;
+  align-items: stretch;
+}
+.repl-node {
+  background: var(--bg);
+  border: 2px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 14px 18px;
+  min-width: 130px;
+  text-align: center;
+  transition: all var(--transition);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+.repl-node:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+.repl-node.primary  { border-color: var(--primary); background: var(--primary-faint); }
+.repl-node.replica  { border-color: var(--success); background: var(--success-faint); }
+.repl-node.client   { border-color: var(--accent); background: var(--accent-faint); border-style: dashed; }
+.repl-cyl {
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.repl-name { font-weight: 700; font-size: 14px; color: var(--text); }
+.repl-tag  { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; font-weight: 600; }
+.repl-flow {
+  text-align: center;
+  margin: 16px 0;
+  position: relative;
+}
+.repl-flow .repl-arrow {
+  display: inline-block;
+  position: relative;
+  height: 2px;
+  width: 70%;
+  background: var(--border-strong);
+  margin: 18px 0;
+}
+.repl-flow .repl-arrow::after {
+  content: '';
+  position: absolute;
+  right: -1px; top: 50%;
+  transform: translateY(-50%);
+  width: 0; height: 0;
+  border: 6px solid transparent;
+  border-left-color: var(--border-strong);
+  border-right: 0;
+}
+.repl-flow .repl-label {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Read-replica two-track layout */
+.read-replica {
+  background: linear-gradient(180deg, var(--bg-elevated), var(--bg-muted));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin: 28px 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 14px;
+  align-items: center;
+}
+@media (max-width: 640px) { .read-replica { grid-template-columns: 1fr; } }
+.rr-app-stack { display: flex; flex-direction: column; gap: 10px; }
+.rr-app {
+  background: var(--bg);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  transition: all var(--transition);
+}
+.rr-app:hover { border-color: var(--primary); }
+.rr-app.bi { border-style: dashed; }
+.rr-arrow-col { display: flex; flex-direction: column; gap: 30px; align-items: center; }
+.rr-arrow {
+  position: relative;
+  width: 100px;
+  height: 2px;
+  background: var(--border-strong);
+}
+.rr-arrow.write { background: var(--primary); }
+.rr-arrow.read  { background: var(--success); }
+.rr-arrow::after {
+  content: '';
+  position: absolute; right: -1px; top: 50%;
+  transform: translateY(-50%);
+  width: 0; height: 0;
+  border: 6px solid transparent;
+  border-left-color: inherit;
+  border-right: 0;
+}
+.rr-arrow.write::after { border-left-color: var(--primary); }
+.rr-arrow.read::after  { border-left-color: var(--success); }
+.rr-arrow .lbl {
+  position: absolute;
+  top: -22px; left: 50%; transform: translateX(-50%);
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  padding: 2px 8px; border-radius: 4px;
+  white-space: nowrap;
+}
+.rr-db-stack { display: flex; flex-direction: column; gap: 24px; position: relative; }
+.rr-db {
+  background: var(--bg);
+  border: 2px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+  transition: all var(--transition);
+}
+.rr-db.primary { border-color: var(--primary); background: var(--primary-faint); }
+.rr-db.replica { border-color: var(--success); background: var(--success-faint); }
+.rr-db .rr-cyl { font-size: 32px; }
+.rr-db .rr-name { font-weight: 700; font-size: 13px; margin-top: 4px; }
+.rr-db .rr-role { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.rr-sync {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10.5px;
+  font-style: italic;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border-strong);
+  padding: 2px 8px; border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* ----- Client → Server → Database flow ----- */
+.db-flow {
+  background: linear-gradient(180deg, var(--bg-elevated), var(--bg-muted));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  margin: 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.db-flow-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 110px;
+}
+.db-flow-icon {
+  font-size: 42px;
+  width: 76px; height: 76px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+  border: 2px solid var(--border-strong);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition);
+}
+.db-flow-node:hover .db-flow-icon { transform: translateY(-4px); border-color: var(--primary); box-shadow: var(--shadow-md); }
+.db-flow-label { font-weight: 700; font-size: 13px; color: var(--text); }
+.db-flow-arrow {
+  position: relative;
+  width: 60px; height: 2px;
+  background: var(--border-strong);
+  flex-shrink: 0;
+}
+.db-flow-arrow::after {
+  content: '';
+  position: absolute; right: -1px; top: 50%;
+  transform: translateY(-50%);
+  width: 0; height: 0;
+  border: 6px solid transparent;
+  border-left-color: var(--border-strong);
+  border-right: 0;
+}
+@media (max-width: 520px) {
+  .db-flow-arrow { width: 2px; height: 30px; }
+  .db-flow-arrow::after { right: 50%; top: auto; bottom: -1px; transform: translateX(50%); border-left-color: transparent; border-top-color: var(--border-strong); border-bottom: 0; }
+}
+
+/* ----- Object storage hub-and-spoke ----- */
+.obj-hub {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1 / 1;
+  margin: 28px auto;
+  background: radial-gradient(circle at center, var(--primary-faint), var(--bg-elevated));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.obj-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 130px; height: 130px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), #4f46e5);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 16px;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35);
+  z-index: 3;
+}
+.obj-center .obj-icon { font-size: 28px; margin-bottom: 4px; }
+.obj-satellite {
+  position: absolute;
+  width: 84px; height: 84px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--primary);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition);
+  z-index: 2;
+}
+.obj-satellite:hover { transform: scale(1.08); box-shadow: var(--shadow-md); }
+.obj-satellite .obj-sat-icon { font-size: 18px; margin-bottom: 2px; }
+.obj-satellite.id   { top: 12%;  left: 8%; }
+.obj-satellite.meta { top: 12%;  right: 8%; }
+.obj-satellite.data { bottom: 12%; left: 8%; }
+.obj-satellite.attr { bottom: 12%; right: 8%; }
+.obj-spoke {
+  position: absolute;
+  top: 50%; left: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), transparent);
+  transform-origin: 0 50%;
+  z-index: 1;
+}
+
+/* ----- HDFS architecture (NameNode + DataNodes in racks) ----- */
+.hdfs {
+  background: linear-gradient(180deg, var(--bg-elevated), var(--bg-muted));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  margin: 28px 0;
+}
+.hdfs-namenode-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.hdfs-namenode {
+  background: linear-gradient(135deg, var(--primary), #4f46e5);
+  color: white;
+  padding: 14px 22px;
+  border-radius: 12px;
+  font-weight: 700;
+  box-shadow: var(--shadow-md);
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px;
+}
+.hdfs-namenode .nn-icon { font-size: 20px; }
+.hdfs-meta {
+  background: var(--bg);
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  max-width: 240px;
+}
+.hdfs-racks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+@media (max-width: 640px) { .hdfs-racks { grid-template-columns: 1fr; } }
+.hdfs-rack {
+  background: var(--bg);
+  border: 2px dashed var(--accent);
+  border-radius: 12px;
+  padding: 16px 12px 12px;
+  position: relative;
+}
+.hdfs-rack-label {
+  position: absolute;
+  top: -10px; left: 14px;
+  background: var(--accent);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.hdfs-datanodes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.hdfs-datanode {
+  background: var(--success-faint);
+  border: 1.5px solid var(--success);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  transition: all var(--transition);
+}
+.hdfs-datanode:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.hdfs-datanode .dn-name { font-weight: 700; font-size: 11.5px; color: var(--success); margin-bottom: 6px; }
+.hdfs-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  justify-content: center;
+}
+.hdfs-block {
+  width: 14px; height: 14px;
+  background: var(--success);
+  border-radius: 2px;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+.hdfs-clients {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 18px;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.hdfs-client {
+  background: var(--danger);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+  display: flex; align-items: center; gap: 6px;
+  box-shadow: var(--shadow-sm);
+}
+.hdfs-legend {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.hdfs-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.hdfs-legend .dot { width: 10px; height: 10px; border-radius: 2px; }
+.hdfs-legend .dot.read   { background: var(--danger); }
+.hdfs-legend .dot.write  { background: var(--primary); }
+.hdfs-legend .dot.repl   { background: var(--accent); }
+
+/* Common figure styling */
+figure.diagram {
+  margin: 28px 0;
+}
+figure.diagram > figcaption {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 10px;
+}
+</style>
 </head>
 <body>
 
 <div class="progress-bar" id="progressBar"></div>
 
 <header class="topbar">
-  <a class="brand" href="index.html">
+  <a class="brand" href="../index.html">
     <span class="brand-icon">SD</span>
     <span>Mastering System Design</span>
   </a>
@@ -178,6 +838,34 @@
     </ul>
     <p><em>Optimizing one often impacts the others</em> — the classic scalability/reliability/performance triangle.</p>
 
+    <figure class="diagram" aria-label="Scalability, Reliability, and Performance triad">
+      <div class="triad">
+        <div class="triad-node top">
+          <span class="triad-icon">🛡️</span>
+          <span>Reliability</span>
+        </div>
+        <div class="triad-node left">
+          <span class="triad-icon">✅</span>
+          <span>Availability</span>
+        </div>
+        <div class="triad-node right">
+          <span class="triad-icon">📈</span>
+          <span>Scalability</span>
+        </div>
+        <svg viewBox="0 0 460 437" preserveAspectRatio="none" style="position:absolute;inset:24px;width:calc(100% - 48px);height:calc(100% - 48px);z-index:1;" aria-hidden="true">
+          <defs>
+            <marker id="arr7tri" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--primary)" />
+            </marker>
+          </defs>
+          <line x1="230" y1="100" x2="105" y2="320" stroke="var(--primary)" stroke-width="2.5" marker-start="url(#arr7tri)" marker-end="url(#arr7tri)" />
+          <line x1="230" y1="100" x2="355" y2="320" stroke="var(--primary)" stroke-width="2.5" marker-start="url(#arr7tri)" marker-end="url(#arr7tri)" />
+          <line x1="105" y1="345" x2="355" y2="345" stroke="var(--primary)" stroke-width="2.5" marker-start="url(#arr7tri)" marker-end="url(#arr7tri)" />
+        </svg>
+      </div>
+      <figcaption>The three competing forces — optimize one, trade off another</figcaption>
+    </figure>
+
     <div class="card-grid">
       <div class="card">
         <div class="card-icon">📈</div>
@@ -205,15 +893,28 @@
     </ul>
     <p><strong>No distributed system can have all three at the same time.</strong></p>
 
-    <h3>CAP Triangle</h3>
-    <div class="archd" aria-label="CAP theorem triangle">
-      <div class="archd-node is-infra"><span class="archd-icon">🎯</span><span>Consistency</span></div>
-      <div class="archd-arrow"><span class="archd-arrow-label">Pick 2</span></div>
-      <div class="archd-row">
-        <div class="archd-node is-data"><span class="archd-icon">🌐</span><span>Partition Tolerance</span></div>
-        <div class="archd-node is-service"><span class="archd-icon">✅</span><span>Availability</span></div>
+    <h3>CAP Theorem — Pick Two</h3>
+    <figure class="diagram" aria-label="CAP theorem Venn diagram">
+      <div class="cap-venn">
+        <div class="cap-circle c">
+          <div class="cap-name">Consistency</div>
+          <div class="cap-desc">All clients see the same view of data, even right after an update or delete.</div>
+        </div>
+        <div class="cap-circle a">
+          <div class="cap-name">Availability</div>
+          <div class="cap-desc">All clients can find a replica of data, even in case of partial node failures.</div>
+        </div>
+        <div class="cap-circle p">
+          <div class="cap-name">Partition Tolerance</div>
+          <div class="cap-desc">The system continues to work as expected, even with partial network failure.</div>
+        </div>
+        <span class="cap-tag ca">CA</span>
+        <span class="cap-tag cp">CP</span>
+        <span class="cap-tag ap">AP</span>
+        <span class="cap-tag x">✕</span>
       </div>
-    </div>
+      <figcaption>You can guarantee at most two — never all three at once</figcaption>
+    </figure>
 
     <h3>Types of Systems Based on CAP Trade-offs</h3>
 
@@ -266,6 +967,26 @@
     <h2 id="sql-vs-nosql">Database Models — SQL vs. NoSQL</h2>
     <p>At its core, a <strong>database</strong> provides a structured way to store, retrieve, and manage data persistently — even across restarts or failures.</p>
 
+    <figure class="diagram" aria-label="Client to server to database flow">
+      <div class="db-flow">
+        <div class="db-flow-node">
+          <div class="db-flow-icon">💻</div>
+          <div class="db-flow-label">Client</div>
+        </div>
+        <div class="db-flow-arrow"></div>
+        <div class="db-flow-node">
+          <div class="db-flow-icon">🖥️</div>
+          <div class="db-flow-label">Server</div>
+        </div>
+        <div class="db-flow-arrow"></div>
+        <div class="db-flow-node">
+          <div class="db-flow-icon">🗄️</div>
+          <div class="db-flow-label">Database</div>
+        </div>
+      </div>
+      <figcaption>Databases act as the persistent data manager behind the application server</figcaption>
+    </figure>
+
     <h3>Relational Databases (SQL): The Traditional Powerhouse</h3>
     <ul>
       <li><strong>Schema:</strong> Fixed, structured tables.</li>
@@ -283,6 +1004,39 @@
     </ul>
 
     <h4>Example: SQL Table Schema</h4>
+
+    <figure class="diagram" aria-label="SQL relational schema with join tables">
+      <div class="sql-schema">
+        <div>
+          <div class="sql-table">
+            <div class="sql-table-header"><span>📋</span><span>USERS</span></div>
+            <div class="sql-row pk"><span class="key-icon">🔑</span><span>USER_ID</span></div>
+            <div class="sql-row"><span class="key-icon">▫</span><span>USER_NAME</span></div>
+            <div class="sql-row"><span class="key-icon">▫</span><span>PASSWORD</span></div>
+            <div class="sql-row"><span class="key-icon">▫</span><span>EMAIL</span></div>
+          </div>
+          <div class="sql-join">↕ joined via USER_ID</div>
+        </div>
+        <div>
+          <div class="sql-table">
+            <div class="sql-table-header"><span>🔗</span><span>USER_ROLES</span></div>
+            <div class="sql-row fk"><span class="key-icon">🔑</span><span>USER_ID (FK)</span></div>
+            <div class="sql-row fk"><span class="key-icon">🔑</span><span>ROLE_ID (FK)</span></div>
+          </div>
+          <div class="sql-join">junction table</div>
+        </div>
+        <div>
+          <div class="sql-table">
+            <div class="sql-table-header"><span>📋</span><span>ROLES</span></div>
+            <div class="sql-row pk"><span class="key-icon">🔑</span><span>ROLE_ID</span></div>
+            <div class="sql-row"><span class="key-icon">▫</span><span>ROLE_NAME</span></div>
+          </div>
+          <div class="sql-join">↕ joined via ROLE_ID</div>
+        </div>
+      </div>
+      <figcaption>Many-to-many users ↔ roles via a junction table</figcaption>
+    </figure>
+
 <pre><code class="language-sql">CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE,
@@ -376,16 +1130,66 @@ WHERE orders.date &gt; '2024-06-01';</code></pre>
     </ul>
 
     <h4>NoSQL Database Types — Visualized</h4>
-    <div class="archd" aria-label="NoSQL types tree">
-      <div class="archd-node is-infra"><span class="archd-icon">🗄️</span><span>NoSQL</span></div>
-      <div class="archd-arrow"></div>
-      <div class="archd-row">
-        <div class="archd-node is-data"><span class="archd-icon">📄</span><span>Document<br><small style="font-weight:400;opacity:0.75;">MongoDB</small></span></div>
-        <div class="archd-node is-data"><span class="archd-icon">🔑</span><span>Key-Value<br><small style="font-weight:400;opacity:0.75;">Redis, DynamoDB</small></span></div>
-        <div class="archd-node is-data"><span class="archd-icon">📊</span><span>Columnar<br><small style="font-weight:400;opacity:0.75;">Cassandra, HBase</small></span></div>
-        <div class="archd-node is-data"><span class="archd-icon">🕸️</span><span>Graph<br><small style="font-weight:400;opacity:0.75;">Neo4j</small></span></div>
+    <figure class="diagram" aria-label="The four NoSQL database types">
+      <div class="nosql-grid">
+        <div class="nosql-card kv">
+          <div class="nosql-visual kv-viz">
+            <div class="kv-pair"><span class="kv-k">K1</span><span class="kv-arrow">→</span><span class="kv-v">V1</span></div>
+            <div class="kv-pair"><span class="kv-k">K2</span><span class="kv-arrow">→</span><span class="kv-v">V2</span></div>
+            <div class="kv-pair"><span class="kv-k">K3</span><span class="kv-arrow">→</span><span class="kv-v">V3</span></div>
+          </div>
+          <div class="nosql-title">Key-Value</div>
+          <div class="nosql-sub">Redis · DynamoDB</div>
+        </div>
+        <div class="nosql-card doc">
+          <div class="nosql-visual">
+            <div class="doc-tree">
+              <div class="doc-node root"></div>
+              <div class="doc-node l1"></div>
+              <div class="doc-node l2"></div>
+              <div class="doc-node l3"></div>
+              <div class="doc-node l4"></div>
+              <svg viewBox="0 0 90 80" style="position:absolute;inset:0;width:100%;height:100%;z-index:0;" aria-hidden="true">
+                <line x1="45" y1="8" x2="24" y2="43" stroke="var(--border-strong)" stroke-width="2"/>
+                <line x1="45" y1="8" x2="66" y2="43" stroke="var(--border-strong)" stroke-width="2"/>
+                <line x1="24" y1="43" x2="8" y2="73" stroke="var(--border-strong)" stroke-width="2"/>
+                <line x1="66" y1="43" x2="82" y2="73" stroke="var(--border-strong)" stroke-width="2"/>
+              </svg>
+            </div>
+          </div>
+          <div class="nosql-title">Document</div>
+          <div class="nosql-sub">MongoDB · CouchDB</div>
+        </div>
+        <div class="nosql-card col">
+          <div class="nosql-visual">
+            <div class="col-grid">
+              <div class="col-cell"></div><div class="col-cell hi"></div><div class="col-cell"></div>
+              <div class="col-cell hi"></div><div class="col-cell"></div><div class="col-cell"></div>
+              <div class="col-cell"></div><div class="col-cell"></div><div class="col-cell hi"></div>
+            </div>
+          </div>
+          <div class="nosql-title">Column-Family</div>
+          <div class="nosql-sub">Cassandra · HBase</div>
+        </div>
+        <div class="nosql-card graph">
+          <div class="nosql-visual">
+            <div class="graph-mini">
+              <svg viewBox="0 0 90 80" style="position:absolute;inset:0;width:100%;height:100%;z-index:0;" aria-hidden="true">
+                <line x1="17" y1="17" x2="73" y2="17" stroke="var(--border-strong)" stroke-width="2"/>
+                <line x1="17" y1="17" x2="45" y2="65" stroke="var(--border-strong)" stroke-width="2"/>
+                <line x1="73" y1="17" x2="45" y2="65" stroke="var(--border-strong)" stroke-width="2"/>
+              </svg>
+              <div class="g-node n1"></div>
+              <div class="g-node n2"></div>
+              <div class="g-node n3"></div>
+            </div>
+          </div>
+          <div class="nosql-title">Graph</div>
+          <div class="nosql-sub">Neo4j · ArangoDB</div>
+        </div>
       </div>
-    </div>
+      <figcaption>Four distinct shapes of NoSQL — each tuned for a different access pattern</figcaption>
+    </figure>
 
     <h4>Example: Document Store (MongoDB)</h4>
 <pre><code class="language-json">{
@@ -523,17 +1327,48 @@ WHERE orders.date &gt; '2024-06-01';</code></pre>
       <li><strong>Synchronous replication</strong> offers strong consistency but can impact availability.</li>
     </ul>
 
-    <div class="archd" aria-label="Leader-follower replication diagram">
-      <div class="archd-node is-infra"><span class="archd-icon">👑</span><span>Leader Node<br><small style="font-weight:400;opacity:0.85;">writes</small></span></div>
-      <div class="archd-arrow"><span class="archd-arrow-label">Replicates</span></div>
-      <div class="archd-row">
-        <div class="archd-node is-data"><span class="archd-icon">📚</span><span>Follower 1<br><small style="font-weight:400;opacity:0.75;">reads</small></span></div>
-        <div class="archd-node is-data"><span class="archd-icon">📚</span><span>Follower 2<br><small style="font-weight:400;opacity:0.75;">reads</small></span></div>
-        <div class="archd-node is-data"><span class="archd-icon">📚</span><span>Follower 3<br><small style="font-weight:400;opacity:0.75;">reads</small></span></div>
+    <figure class="diagram" aria-label="Leader-follower primary-replica architecture">
+      <div class="replica-arch">
+        <div class="repl-row">
+          <div class="repl-node client">
+            <div class="repl-cyl">🧑‍💻</div>
+            <div class="repl-name">Client</div>
+            <div class="repl-tag">writes &amp; reads</div>
+          </div>
+        </div>
+        <div class="repl-flow">
+          <span class="repl-arrow"><span class="repl-label">Writes</span></span>
+        </div>
+        <div class="repl-row">
+          <div class="repl-node primary">
+            <div class="repl-cyl">🛢️</div>
+            <div class="repl-name">Leader</div>
+            <div class="repl-tag">primary</div>
+          </div>
+          <div class="repl-node replica">
+            <div class="repl-cyl">🛢️</div>
+            <div class="repl-name">Follower 1</div>
+            <div class="repl-tag">reads</div>
+          </div>
+          <div class="repl-node replica">
+            <div class="repl-cyl">🛢️</div>
+            <div class="repl-name">Follower 2</div>
+            <div class="repl-tag">reads</div>
+          </div>
+        </div>
+        <div class="repl-flow">
+          <span class="repl-arrow"><span class="repl-label">Replicates</span></span>
+        </div>
+        <div class="repl-row">
+          <div class="repl-node client">
+            <div class="repl-cyl">👥</div>
+            <div class="repl-name">Read Clients</div>
+            <div class="repl-tag">load-balanced</div>
+          </div>
+        </div>
       </div>
-      <div class="archd-arrow"></div>
-      <div class="archd-node is-user"><span class="archd-icon">👥</span><span>Clients (read from followers)</span></div>
-    </div>
+      <figcaption>All writes funnel to the leader; reads fan out across followers</figcaption>
+    </figure>
 
     <h4>Read Replicas</h4>
     <ul>
@@ -541,6 +1376,34 @@ WHERE orders.date &gt; '2024-06-01';</code></pre>
       <li><strong>All writes</strong> go to the primary; <strong>reads</strong> are balanced across replicas.</li>
       <li><strong>Trade-off:</strong> Potential for stale reads if replication lags.</li>
     </ul>
+
+    <figure class="diagram" aria-label="Read replica architecture with separate BI workload">
+      <div class="read-replica">
+        <div class="rr-app-stack">
+          <div class="rr-app">⚙️ App Server 1</div>
+          <div class="rr-app">⚙️ App Server 2</div>
+          <div class="rr-app bi">📊 BI / Reporting Server</div>
+        </div>
+        <div class="rr-arrow-col">
+          <div class="rr-arrow write"><span class="lbl">Read / Write</span></div>
+          <div class="rr-arrow read"><span class="lbl">Read only</span></div>
+        </div>
+        <div class="rr-db-stack">
+          <div class="rr-db primary">
+            <div class="rr-cyl">🛢️</div>
+            <div class="rr-name">Primary</div>
+            <div class="rr-role">writes</div>
+          </div>
+          <div class="rr-db replica">
+            <div class="rr-cyl">🛢️</div>
+            <div class="rr-name">Read Replica</div>
+            <div class="rr-role">reads only</div>
+          </div>
+          <div class="rr-sync">⤓ async replication</div>
+        </div>
+      </div>
+      <figcaption>Heavy BI queries hit the replica — the primary stays free for OLTP traffic</figcaption>
+    </figure>
 
     <h4>Example: Configuring Read Replicas in PostgreSQL</h4>
 <pre><code class="language-bash"># On the primary server (postgresql.conf)
@@ -735,6 +1598,39 @@ my-bucket/backups/2025/jan.zip</code></pre>
     </ul>
 
     <h4>Object Storage Structure</h4>
+    <figure class="diagram" aria-label="Object storage architecture — object surrounded by its components">
+      <div class="obj-hub">
+        <svg viewBox="0 0 480 480" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;z-index:1;" aria-hidden="true">
+          <line x1="240" y1="240" x2="100" y2="100" stroke="var(--primary)" stroke-width="2" opacity="0.6"/>
+          <line x1="240" y1="240" x2="380" y2="100" stroke="var(--primary)" stroke-width="2" opacity="0.6"/>
+          <line x1="240" y1="240" x2="100" y2="380" stroke="var(--primary)" stroke-width="2" opacity="0.6"/>
+          <line x1="240" y1="240" x2="380" y2="380" stroke="var(--primary)" stroke-width="2" opacity="0.6"/>
+        </svg>
+        <div class="obj-center">
+          <div class="obj-icon">📦</div>
+          <div>OBJECT</div>
+        </div>
+        <div class="obj-satellite id">
+          <div class="obj-sat-icon">🔑</div>
+          <div>ID</div>
+        </div>
+        <div class="obj-satellite meta">
+          <div class="obj-sat-icon">🏷️</div>
+          <div>META<br>DATA</div>
+        </div>
+        <div class="obj-satellite data">
+          <div class="obj-sat-icon">💾</div>
+          <div>DATA</div>
+        </div>
+        <div class="obj-satellite attr">
+          <div class="obj-sat-icon">⚙️</div>
+          <div>ATTRIBUTES</div>
+        </div>
+      </div>
+      <figcaption>Every object bundles its data, unique ID, metadata, and attributes into one logical unit</figcaption>
+    </figure>
+
+    <p>And the higher-level view of buckets housing many objects:</p>
     <div class="archd" aria-label="Object storage buckets and objects">
       <div class="archd-row">
         <div class="archd-node is-data"><span class="archd-icon">🪣</span><span>Bucket: photos<br><small style="font-weight:400;opacity:0.75;">dog.jpg · key: 123abc<br>metadata: type, tags</small></span></div>
@@ -952,17 +1848,102 @@ with client.read('/user/data/example.txt', encoding='utf-8') as reader:
     print(content)</code></pre>
 
     <h3>DFS Architecture — Visualized</h3>
-    <div class="archd" aria-label="HDFS NameNode and DataNodes">
-      <div class="archd-node is-infra"><span class="archd-icon">🧠</span><span>NameNode<br><small style="font-weight:400;opacity:0.85;">Metadata manager</small></span></div>
-      <div class="archd-arrow"></div>
-      <div class="archd-row">
-        <div class="archd-node is-data"><span class="archd-icon">💾</span><span>DataNode 1<br><small style="font-weight:400;opacity:0.75;">Block 1, Block 3</small></span></div>
-        <div class="archd-node is-data"><span class="archd-icon">💾</span><span>DataNode 2<br><small style="font-weight:400;opacity:0.75;">Block 2, Block 1</small></span></div>
-        <div class="archd-node is-data"><span class="archd-icon">💾</span><span>DataNode 3<br><small style="font-weight:400;opacity:0.75;">Block 3, Block 2</small></span></div>
+    <figure class="diagram" aria-label="HDFS architecture with NameNode, DataNodes, and racks">
+      <div class="hdfs">
+        <div class="hdfs-namenode-row">
+          <div class="hdfs-namenode">
+            <span class="nn-icon">🧠</span>
+            <span>NameNode</span>
+          </div>
+          <div class="hdfs-meta">
+            Metadata (Name, replicas, …):<br>
+            /home/foo/data, 3, …
+          </div>
+        </div>
+        <div class="hdfs-racks">
+          <div class="hdfs-rack">
+            <div class="hdfs-rack-label">Rack 1</div>
+            <div class="hdfs-datanodes">
+              <div class="hdfs-datanode">
+                <div class="dn-name">DataNode</div>
+                <div class="hdfs-blocks">
+                  <div class="hdfs-block"></div>
+                  <div class="hdfs-block"></div>
+                  <div class="hdfs-block"></div>
+                </div>
+              </div>
+              <div class="hdfs-datanode">
+                <div class="dn-name">DataNode</div>
+                <div class="hdfs-blocks">
+                  <div class="hdfs-block"></div>
+                  <div class="hdfs-block"></div>
+                </div>
+              </div>
+              <div class="hdfs-datanode">
+                <div class="dn-name">DataNode</div>
+                <div class="hdfs-blocks">
+                  <div class="hdfs-block"></div>
+                  <div class="hdfs-block"></div>
+                </div>
+              </div>
+              <div class="hdfs-datanode">
+                <div class="dn-name">DataNode</div>
+                <div class="hdfs-blocks">
+                  <div class="hdfs-block"></div>
+                  <div class="hdfs-block"></div>
+                  <div class="hdfs-block"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="hdfs-rack">
+            <div class="hdfs-rack-label">Rack 2</div>
+            <div class="hdfs-datanodes">
+              <div class="hdfs-datanode">
+                <div class="dn-name">DataNode</div>
+                <div class="hdfs-blocks">
+                  <div class="hdfs-block"></div>
+                  <div class="hdfs-block"></div>
+                  <div class="hdfs-block"></div>
+                </div>
+              </div>
+              <div class="hdfs-datanode">
+                <div class="dn-name">DataNode</div>
+                <div class="hdfs-blocks">
+                  <div class="hdfs-block"></div>
+                  <div class="hdfs-block"></div>
+                </div>
+              </div>
+              <div class="hdfs-datanode">
+                <div class="dn-name">DataNode</div>
+                <div class="hdfs-blocks">
+                  <div class="hdfs-block"></div>
+                  <div class="hdfs-block"></div>
+                  <div class="hdfs-block"></div>
+                </div>
+              </div>
+              <div class="hdfs-datanode">
+                <div class="dn-name">DataNode</div>
+                <div class="hdfs-blocks">
+                  <div class="hdfs-block"></div>
+                  <div class="hdfs-block"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hdfs-clients">
+          <div class="hdfs-client">📖 Client (Read)</div>
+          <div class="hdfs-client">✍️ Client (Write)</div>
+        </div>
+        <div class="hdfs-legend">
+          <span><span class="dot read"></span>Client ops</span>
+          <span><span class="dot write"></span>Block ops via NameNode</span>
+          <span><span class="dot repl"></span>Cross-rack replication (×3)</span>
+        </div>
       </div>
-      <div class="archd-arrow"><span class="archd-arrow-label">Replication</span></div>
-      <div class="archd-node is-service"><span class="archd-icon">🛡️</span><span>Each block replicated across multiple nodes</span></div>
-    </div>
+      <figcaption>NameNode tracks metadata; DataNodes (across racks) store and replicate blocks</figcaption>
+    </figure>
 
     <h3>File Systems &amp; DFS — Tips &amp; Tricks</h3>
     <div class="callout callout-tip">
@@ -1417,7 +2398,7 @@ for msg in consumer:
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
-<script src="assets/system-design.js"></script>
+<script src="../assets/system-design.js"></script>
 
 </body>
 </html>

@@ -8,14 +8,253 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-<link rel="stylesheet" href="assets/system-design.css">
+<link rel="stylesheet" href="../assets/system-design.css">
+<style>
+/* ===== Chapter 10 — Security diagrams ===== */
+figure.sec-figure {
+  margin: 28px 0;
+  padding: 0;
+}
+figure.sec-figure figcaption {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ---- Layered Security (image-24): clients fan-in to API gateway, fan-out to microservices ---- */
+.sec-layered {
+  background: linear-gradient(180deg, var(--bg-elevated), var(--bg-muted));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 24px;
+  display: grid;
+  grid-template-columns: 1fr auto 1.4fr auto 1fr;
+  gap: 18px;
+  align-items: center;
+}
+.sec-layered .col-stack { display: flex; flex-direction: column; gap: 12px; }
+.sec-layered .lane-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  text-align: center;
+  margin-bottom: 6px;
+}
+.sec-gateway {
+  background: linear-gradient(135deg, var(--primary-faint), var(--accent-faint));
+  border: 2px dashed var(--primary);
+  border-radius: var(--radius);
+  padding: 18px 14px;
+  display: flex; flex-direction: column; gap: 10px;
+  align-items: stretch;
+}
+.sec-gateway .gw-title {
+  font-size: 12px; font-weight: 800;
+  color: var(--primary);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  text-align: center;
+}
+.sec-fan {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; color: var(--text-faint);
+}
+@media (max-width: 820px) {
+  .sec-layered { grid-template-columns: 1fr; }
+  .sec-fan { transform: rotate(90deg); }
+}
+
+/* ---- CIA Triad (image-25): triangle layout ---- */
+.cia-triangle {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  margin: 28px auto;
+  aspect-ratio: 1 / 0.92;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.cia-node {
+  position: absolute;
+  width: 130px;
+  padding: 14px 10px;
+  border-radius: 14px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13.5px;
+  border: 2px solid;
+  box-shadow: var(--shadow-sm);
+  background: var(--bg);
+}
+.cia-node .cia-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+.cia-node.c { top: 6%; left: 50%; transform: translateX(-50%);
+  border-color: var(--primary); color: var(--primary); background: var(--primary-faint); }
+.cia-node.i { bottom: 8%; right: 5%;
+  border-color: var(--danger); color: var(--danger); background: var(--danger-faint); }
+.cia-node.a { bottom: 8%; left: 5%;
+  border-color: var(--success); color: var(--success); background: var(--success-faint); }
+.cia-center {
+  position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 96px; height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 16px;
+  box-shadow: var(--shadow-md);
+}
+.cia-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.cia-svg line { stroke: var(--border-strong); stroke-width: 2; stroke-dasharray: 6 6; }
+
+/* ---- Symmetric vs Asymmetric (image-27): 2-col compare ---- */
+.compare-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin: 28px 0;
+}
+.compare-2col .compare-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.compare-2col .compare-card.sym { border-top: 4px solid var(--primary); }
+.compare-2col .compare-card.asym { border-top: 4px solid var(--accent); }
+.compare-2col .compare-title {
+  font-weight: 800; font-size: 15px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.compare-2col .compare-card.sym .compare-title { color: var(--primary); }
+.compare-2col .compare-card.asym .compare-title { color: var(--accent); }
+.flow-line {
+  display: flex; align-items: center; gap: 6px;
+  margin: 10px 0;
+  flex-wrap: wrap;
+}
+.flow-line .pill {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.flow-line .pill.key-shared { background: var(--primary-faint); border-color: var(--primary); color: var(--primary); }
+.flow-line .pill.key-pub    { background: var(--success-faint); border-color: var(--success); color: var(--success); }
+.flow-line .pill.key-priv   { background: var(--danger-faint); border-color: var(--danger); color: var(--danger); }
+.flow-line .arrow { color: var(--text-faint); font-weight: 700; }
+@media (max-width: 720px) { .compare-2col { grid-template-columns: 1fr; } }
+
+/* ---- Hashing flow (image-29) ---- */
+.hash-flow {
+  background: linear-gradient(180deg, var(--bg-elevated), var(--bg-muted));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.hash-block {
+  background: var(--bg);
+  border: 2px solid var(--border-strong);
+  border-radius: 12px;
+  padding: 14px 16px;
+  text-align: center;
+  min-width: 130px;
+}
+.hash-block .lbl {
+  font-size: 11px; font-weight: 700;
+  color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.hash-block .val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 600; color: var(--text);
+  word-break: break-all;
+}
+.hash-block.input { border-color: var(--primary); }
+.hash-block.input .val { color: var(--primary); }
+.hash-block.salt { border-color: var(--accent); background: var(--accent-faint); }
+.hash-block.fn {
+  border-color: var(--text-muted);
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white;
+}
+.hash-block.fn .lbl, .hash-block.fn .val { color: white; }
+.hash-block.digest { border-color: var(--success); }
+.hash-block.digest .val { color: var(--success); }
+.hash-arrow {
+  font-size: 22px; color: var(--text-faint); font-weight: 700;
+}
+
+/* ---- Network security overview (image-31): concentric / stacked layers ---- */
+.net-layers {
+  background: linear-gradient(180deg, var(--bg-elevated), var(--bg-muted));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-items: stretch;
+}
+.net-layer {
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex; align-items: center; gap: 12px;
+  font-weight: 600; font-size: 14px;
+  border: 1.5px solid;
+  position: relative;
+}
+.net-layer + .net-layer { margin-top: 10px; }
+.net-layer .net-num {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: var(--bg); color: var(--text);
+  border: 2px solid currentColor;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 800;
+  flex-shrink: 0;
+}
+.net-layer .net-icon { font-size: 20px; }
+.net-layer .net-body { flex: 1; }
+.net-layer .net-sub {
+  display: block; font-size: 12px; font-weight: 500;
+  color: var(--text-muted); margin-top: 2px;
+}
+.net-layer.l1 { background: var(--bg-muted); border-color: var(--border-strong); color: var(--text); }
+.net-layer.l2 { background: var(--danger-faint); border-color: var(--danger); color: var(--danger); }
+.net-layer.l3 { background: var(--accent-faint); border-color: var(--accent); color: var(--accent); }
+.net-layer.l4 { background: var(--primary-faint); border-color: var(--primary); color: var(--primary); }
+.net-layer.l5 { background: var(--success-faint); border-color: var(--success); color: var(--success); }
+.net-layer.l6 { background: var(--bg-elevated); border-color: var(--border-strong); color: var(--text-muted); }
+.net-down {
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 16px;
+  font-weight: 700;
+  margin: 2px 0;
+}
+</style>
 </head>
 <body>
 
 <div class="progress-bar" id="progressBar"></div>
 
 <header class="topbar">
-  <a class="brand" href="index.html">
+  <a class="brand" href="../index.html">
     <span class="brand-icon">SD</span>
     <span>Mastering System Design</span>
   </a>
@@ -116,6 +355,32 @@
       </div>
     </div>
 
+    <figure class="sec-figure">
+      <div class="sec-layered" aria-label="Layered security: client apps fan in to an API management gateway and out to backend microservices">
+        <div class="col-stack">
+          <div class="lane-label">Clients</div>
+          <div class="archd-node is-user"><span class="archd-icon">📱</span><span>Mobile App</span></div>
+          <div class="archd-node is-user"><span class="archd-icon">💻</span><span>SPA / Web</span></div>
+          <div class="archd-node is-user"><span class="archd-icon">🌐</span><span>Browser (MVC)</span></div>
+        </div>
+        <div class="sec-fan">➜</div>
+        <div class="sec-gateway">
+          <div class="gw-title">API Management</div>
+          <div class="archd-node is-infra"><span class="archd-icon">📘</span><span>Developer Portal</span></div>
+          <div class="archd-node is-service"><span class="archd-icon">🚪</span><span>API Gateway</span></div>
+          <div class="archd-node is-infra"><span class="archd-icon">📤</span><span>Publisher Portal</span></div>
+        </div>
+        <div class="sec-fan">➜</div>
+        <div class="col-stack">
+          <div class="lane-label">Microservices</div>
+          <div class="archd-node is-service"><span class="archd-icon">🧩</span><span>Service 1</span></div>
+          <div class="archd-node is-service"><span class="archd-icon">🧩</span><span>Service 2</span></div>
+          <div class="archd-node is-service"><span class="archd-icon">🧩</span><span>Service 3</span></div>
+        </div>
+      </div>
+      <figcaption>Layered security: every client type traverses the API Management plane before reaching backend microservices.</figcaption>
+    </figure>
+
     <h2 id="the-cia-triad">The CIA Triad</h2>
     <p>The backbone of security:</p>
 
@@ -133,15 +398,29 @@
     </div>
 
     <h3>CIA Triad Diagram</h3>
-    <div class="archd" aria-label="CIA Triad converging on System Security">
-      <div class="archd-row">
-        <div class="archd-node is-infra"><span class="archd-icon">🔒</span><span>Confidentiality</span></div>
-        <div class="archd-node is-infra"><span class="archd-icon">🛡️</span><span>Integrity</span></div>
-        <div class="archd-node is-infra"><span class="archd-icon">⚡</span><span>Availability</span></div>
+    <figure class="sec-figure">
+      <div class="cia-triangle" aria-label="CIA Triad — Confidentiality, Integrity, Availability around a central System Security core">
+        <svg class="cia-svg" viewBox="0 0 100 92" preserveAspectRatio="none" aria-hidden="true">
+          <line x1="50" y1="18" x2="15" y2="78" />
+          <line x1="50" y1="18" x2="85" y2="78" />
+          <line x1="15" y1="78" x2="85" y2="78" />
+        </svg>
+        <div class="cia-node c">
+          <span class="cia-icon">🔒</span>
+          Confidentiality
+        </div>
+        <div class="cia-node a">
+          <span class="cia-icon">⚡</span>
+          Availability
+        </div>
+        <div class="cia-node i">
+          <span class="cia-icon">🛡️</span>
+          Integrity
+        </div>
+        <div class="cia-center">CIA<br>Triad</div>
       </div>
-      <div class="archd-arrow"></div>
-      <div class="archd-node is-service"><span class="archd-icon">🏛️</span><span>System Security</span></div>
-    </div>
+      <figcaption>The three pillars of security — every system control should reinforce at least one.</figcaption>
+    </figure>
 
     <h2 id="threat-modeling">Threat Modeling &amp; Attack Vectors</h2>
     <p><strong>Threat modeling</strong> helps you think like an attacker.</p>
@@ -154,38 +433,41 @@
     </ul>
 
     <h3>STRIDE Model</h3>
-    <div class="card-grid">
-      <div class="card">
-        <div class="card-icon">🎭</div>
-        <div class="card-title">Spoofing</div>
-        <div class="card-body">Impersonating a user or system identity.</div>
+    <figure class="sec-figure">
+      <div class="card-grid" aria-label="STRIDE threat model: six categories of attacker behavior">
+        <div class="card">
+          <div class="card-icon">🎭</div>
+          <div class="card-title">Spoofing</div>
+          <div class="card-body">Impersonating a user or system identity.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🛠️</div>
+          <div class="card-title">Tampering</div>
+          <div class="card-body">Modifying data in transit or at rest.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🚫</div>
+          <div class="card-title">Repudiation</div>
+          <div class="card-body">Denying actions performed (lack of audit trails).</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">📂</div>
+          <div class="card-title">Information Disclosure</div>
+          <div class="card-body">Exposing sensitive data to unauthorized parties.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">💥</div>
+          <div class="card-title">Denial of Service</div>
+          <div class="card-body">Making the system unavailable to legitimate users.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">⬆️</div>
+          <div class="card-title">Elevation of Privilege</div>
+          <div class="card-body">Gaining higher access than authorized.</div>
+        </div>
       </div>
-      <div class="card">
-        <div class="card-icon">🛠️</div>
-        <div class="card-title">Tampering</div>
-        <div class="card-body">Modifying data in transit or at rest.</div>
-      </div>
-      <div class="card">
-        <div class="card-icon">🚫</div>
-        <div class="card-title">Repudiation</div>
-        <div class="card-body">Denying actions performed (lack of audit trails).</div>
-      </div>
-      <div class="card">
-        <div class="card-icon">📂</div>
-        <div class="card-title">Information Disclosure</div>
-        <div class="card-body">Exposing sensitive data to unauthorized parties.</div>
-      </div>
-      <div class="card">
-        <div class="card-icon">💥</div>
-        <div class="card-title">Denial of Service</div>
-        <div class="card-body">Making the system unavailable to legitimate users.</div>
-      </div>
-      <div class="card">
-        <div class="card-icon">⬆️</div>
-        <div class="card-title">Elevation of Privilege</div>
-        <div class="card-body">Gaining higher access than authorized.</div>
-      </div>
-    </div>
+      <figcaption>STRIDE — a mnemonic of the six attacker goals to consider during threat modeling.</figcaption>
+    </figure>
 
     <h3>Common Attack Vectors</h3>
     <div class="table-wrapper">
@@ -559,6 +841,52 @@ app.get('/admin', authenticateJWT, authorizeRoles('admin'), (req, res) => {
       </table>
     </div>
 
+    <figure class="sec-figure">
+      <div class="compare-2col" aria-label="Symmetric encryption uses one shared key; asymmetric uses a public/private key pair">
+        <div class="compare-card sym">
+          <div class="compare-title">🔑 Symmetric</div>
+          <div class="flow-line">
+            <span class="pill">📄 Plaintext</span>
+            <span class="arrow">→</span>
+            <span class="pill key-shared">🔑 Shared Key</span>
+            <span class="arrow">→</span>
+            <span class="pill">🔐 Ciphertext</span>
+          </div>
+          <div class="flow-line">
+            <span class="pill">🔐 Ciphertext</span>
+            <span class="arrow">→</span>
+            <span class="pill key-shared">🔑 Shared Key</span>
+            <span class="arrow">→</span>
+            <span class="pill">📄 Plaintext</span>
+          </div>
+          <p class="muted" style="font-size:13px;margin-top:10px;">
+            Same secret encrypts and decrypts — fast (AES, ChaCha20). Challenge: share the key safely.
+          </p>
+        </div>
+        <div class="compare-card asym">
+          <div class="compare-title">🔐 Asymmetric</div>
+          <div class="flow-line">
+            <span class="pill">📄 Plaintext</span>
+            <span class="arrow">→</span>
+            <span class="pill key-pub">🟢 Public Key</span>
+            <span class="arrow">→</span>
+            <span class="pill">🔐 Ciphertext</span>
+          </div>
+          <div class="flow-line">
+            <span class="pill">🔐 Ciphertext</span>
+            <span class="arrow">→</span>
+            <span class="pill key-priv">🔴 Private Key</span>
+            <span class="arrow">→</span>
+            <span class="pill">📄 Plaintext</span>
+          </div>
+          <p class="muted" style="font-size:13px;margin-top:10px;">
+            Public encrypts, only private decrypts (RSA, ECC). Slower — used for identity &amp; key exchange.
+          </p>
+        </div>
+      </div>
+      <figcaption>One key vs. a pair: symmetric is fast for bulk data; asymmetric solves trustless key exchange.</figcaption>
+    </figure>
+
     <p><strong>Symmetric Encryption:</strong></p>
     <ul>
       <li>Uses <strong>one key</strong> for both encryption and decryption.</li>
@@ -597,6 +925,36 @@ assert decrypted == plaintext</code></pre>
       <li><strong>Key Exchange:</strong> Client encrypts a random symmetric key with server's public key.</li>
       <li><strong>Secure Session:</strong> Both use the symmetric key for fast, secure data transfer.</li>
     </ol>
+
+    <figure class="sec-figure">
+      <div class="archd-seq" aria-label="TLS handshake sequence between Client and Server">
+        <div class="archd-seq-step"><span class="num">1</span>Client Hello — propose cipher suites &amp; TLS version</div>
+        <div class="archd-seq-row cols-2">
+          <div class="archd-node is-user"><span class="archd-icon">💻</span><span>Client</span></div>
+          <div class="archd-seq-arrow right"><span class="label">ClientHello + ciphers</span></div>
+          <div class="archd-node is-service"><span class="archd-icon">🖥️</span><span>Server</span></div>
+        </div>
+        <div class="archd-seq-step"><span class="num">2</span>Server Hello — select cipher &amp; send certificate</div>
+        <div class="archd-seq-row cols-2">
+          <div class="archd-node is-user"><span class="archd-icon">💻</span><span>Client</span></div>
+          <div class="archd-seq-arrow left"><span class="label">ServerHello + cert (public key)</span></div>
+          <div class="archd-node is-service"><span class="archd-icon">🖥️</span><span>Server</span></div>
+        </div>
+        <div class="archd-seq-step"><span class="num">3</span>Key exchange — client encrypts symmetric key with server's public key</div>
+        <div class="archd-seq-row cols-2">
+          <div class="archd-node is-user"><span class="archd-icon">💻</span><span>Client</span></div>
+          <div class="archd-seq-arrow right"><span class="label">encrypted pre-master secret</span></div>
+          <div class="archd-node is-service"><span class="archd-icon">🖥️</span><span>Server</span></div>
+        </div>
+        <div class="archd-seq-step"><span class="num">4</span>Finished — both sides switch to symmetric encryption</div>
+        <div class="archd-seq-row cols-2">
+          <div class="archd-node is-user"><span class="archd-icon">🔐</span><span>Client (session key)</span></div>
+          <div class="archd-seq-arrow right"><span class="label">encrypted application data</span></div>
+          <div class="archd-node is-service"><span class="archd-icon">🔐</span><span>Server (session key)</span></div>
+        </div>
+      </div>
+      <figcaption>TLS handshake: asymmetric crypto establishes trust &amp; exchanges a symmetric session key for fast bulk encryption.</figcaption>
+    </figure>
 
     <h3>Encryption: At Rest &amp; In Transit</h3>
     <div class="table-wrapper">
@@ -643,6 +1001,31 @@ https.createServer(options, app).listen(443);</code></pre>
 
     <h4>Hashing</h4>
     <p>Hashing converts input data into a fixed-length string using a mathematical algorithm. It is a <strong>one-way</strong> operation.</p>
+
+    <figure class="sec-figure">
+      <div class="hash-flow" aria-label="Hashing flow: input plus salt run through a one-way function produces a fixed-length digest">
+        <div class="hash-block input">
+          <div class="lbl">Input</div>
+          <div class="val">"Apple"</div>
+        </div>
+        <span class="hash-arrow">+</span>
+        <div class="hash-block salt">
+          <div class="lbl">Salt</div>
+          <div class="val">"yrtZd"</div>
+        </div>
+        <span class="hash-arrow">→</span>
+        <div class="hash-block fn">
+          <div class="lbl">Hash Function</div>
+          <div class="val">bcrypt / SHA-256</div>
+        </div>
+        <span class="hash-arrow">→</span>
+        <div class="hash-block digest">
+          <div class="lbl">Fixed-length Digest</div>
+          <div class="val">fa54f6asf4as6ff…</div>
+        </div>
+      </div>
+      <figcaption>One-way hashing: identical inputs yield identical hashes, so a per-record <strong>salt</strong> defeats rainbow tables.</figcaption>
+    </figure>
 
     <p><strong>Pros:</strong></p>
     <ul>
@@ -760,6 +1143,27 @@ hashed = bcrypt.hashpw(password, salt)
     </div>
 
     <h3>Secure API Communication</h3>
+
+    <figure class="sec-figure">
+      <div class="archd" aria-label="Secure API architecture: client routes through auth, rate limit, API, and encrypted data store">
+        <div class="archd-row">
+          <div class="archd-node is-user"><span class="archd-icon">💻</span><span>API Client (Web)</span></div>
+          <div class="archd-node is-user"><span class="archd-icon">📱</span><span>API Client (Mobile)</span></div>
+        </div>
+        <div class="archd-arrow"><span class="archd-arrow-label">HTTPS / TLS</span></div>
+        <div class="archd-node is-infra"><span class="archd-icon">🛡️</span><span>WAF — block OWASP Top 10</span></div>
+        <div class="archd-arrow"></div>
+        <div class="archd-node is-infra"><span class="archd-icon">🚪</span><span>Auth Gateway (OAuth2 / JWT / mTLS)</span></div>
+        <div class="archd-arrow"></div>
+        <div class="archd-node is-infra"><span class="archd-icon">⏱️</span><span>Rate Limiter &amp; Input Validation</span></div>
+        <div class="archd-arrow"><span class="archd-arrow-label">verified request</span></div>
+        <div class="archd-node is-service"><span class="archd-icon">🧩</span><span>API Endpoint</span></div>
+        <div class="archd-arrow"><span class="archd-arrow-label">encrypted query</span></div>
+        <div class="archd-node is-data"><span class="archd-icon">🔐</span><span>Encrypted Data Store</span></div>
+      </div>
+      <figcaption>A hardened API path: every request is encrypted in transit, authenticated, rate-limited, validated — and data stays encrypted at rest.</figcaption>
+    </figure>
+
     <p><strong>Key techniques:</strong></p>
     <ul>
       <li><strong>HTTPS (TLS):</strong> Encrypts data in transit.</li>
@@ -812,6 +1216,65 @@ payload = jwt.decode(token, SECRET, algorithms=['HS256'])</code></pre>
     </div>
 
     <h2 id="network-infrastructure">Network &amp; Infrastructure Security</h2>
+
+    <figure class="sec-figure">
+      <div class="net-layers" aria-label="Network security layers: Internet, DDoS protection, WAF, load balancer, application, database">
+        <div class="net-layer l1">
+          <div class="net-num">1</div>
+          <div class="net-icon">🌐</div>
+          <div class="net-body">
+            <strong>Internet — Untrusted Edge</strong>
+            <span class="net-sub">Bots, scanners, attackers, real users — all arrive here.</span>
+          </div>
+        </div>
+        <div class="net-down">▼</div>
+        <div class="net-layer l2">
+          <div class="net-num">2</div>
+          <div class="net-icon">🛡️</div>
+          <div class="net-body">
+            <strong>DDoS Protection / CDN</strong>
+            <span class="net-sub">Cloudflare, AWS Shield — absorb volumetric attacks &amp; cache.</span>
+          </div>
+        </div>
+        <div class="net-down">▼</div>
+        <div class="net-layer l3">
+          <div class="net-num">3</div>
+          <div class="net-icon">🧱</div>
+          <div class="net-body">
+            <strong>WAF — Web Application Firewall</strong>
+            <span class="net-sub">Filters injection, XSS, OWASP Top 10 payloads.</span>
+          </div>
+        </div>
+        <div class="net-down">▼</div>
+        <div class="net-layer l4">
+          <div class="net-num">4</div>
+          <div class="net-icon">⚖️</div>
+          <div class="net-body">
+            <strong>Load Balancer / Reverse Proxy</strong>
+            <span class="net-sub">TLS termination, routing, health checks (NGINX, ALB).</span>
+          </div>
+        </div>
+        <div class="net-down">▼</div>
+        <div class="net-layer l5">
+          <div class="net-num">5</div>
+          <div class="net-icon">🧩</div>
+          <div class="net-body">
+            <strong>Application Tier</strong>
+            <span class="net-sub">Auth, RBAC/ABAC, input validation, business logic.</span>
+          </div>
+        </div>
+        <div class="net-down">▼</div>
+        <div class="net-layer l6">
+          <div class="net-num">6</div>
+          <div class="net-icon">🗄️</div>
+          <div class="net-body">
+            <strong>Database / Data Tier — Private Subnet</strong>
+            <span class="net-sub">Encryption at rest, row-level security, per-service users.</span>
+          </div>
+        </div>
+      </div>
+      <figcaption>Network security overview — every layer narrows the attack surface before traffic reaches your data.</figcaption>
+    </figure>
 
     <h3>Why Network Security Matters</h3>
     <ul>
@@ -1782,7 +2245,7 @@ payload = jwt.decode(token, SECRET, algorithms=['HS256'])</code></pre>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
-<script src="assets/system-design.js"></script>
+<script src="../assets/system-design.js"></script>
 
 </body>
 </html>

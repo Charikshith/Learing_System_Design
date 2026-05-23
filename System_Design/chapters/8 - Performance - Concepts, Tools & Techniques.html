@@ -8,14 +8,675 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
-<link rel="stylesheet" href="assets/system-design.css">
+<link rel="stylesheet" href="../assets/system-design.css">
+<style>
+  /* Chapter 8 — Performance diagrams */
+  figure.ch8-fig { margin: 22px 0; padding: 0; }
+  figure.ch8-fig > figcaption {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Eviction policy cards */
+  .ch8-evict-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 18px 0;
+  }
+  .ch8-evict {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .ch8-evict h5 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--primary);
+  }
+  .ch8-evict-row {
+    display: flex;
+    gap: 4px;
+    align-items: flex-end;
+    margin-bottom: 8px;
+  }
+  .ch8-evict-cell {
+    flex: 1;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--primary-faint);
+    border: 1px solid var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--primary);
+  }
+  .ch8-evict-cell.evict {
+    background: var(--danger-faint);
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+  .ch8-evict-cell.fresh {
+    background: var(--success-faint);
+    border-color: var(--success);
+    color: var(--success);
+  }
+  .ch8-evict-cap {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  /* Sync vs Async timeline comparison */
+  .ch8-syncasync {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin: 18px 0;
+  }
+  @media (max-width: 720px) {
+    .ch8-syncasync { grid-template-columns: 1fr; }
+  }
+  .ch8-syncasync-col {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .ch8-syncasync-col h5 {
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .ch8-syncasync-col.sync h5 { color: var(--danger); }
+  .ch8-syncasync-col.async h5 { color: var(--success); }
+  .ch8-tl-row {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .ch8-tl-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: right;
+  }
+  .ch8-tl-bar {
+    height: 16px;
+    border-radius: 4px;
+    background: var(--border);
+    position: relative;
+  }
+  .ch8-tl-bar .seg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: white;
+  }
+  .ch8-tl-bar .seg.work    { background: var(--primary); }
+  .ch8-tl-bar .seg.wait    { background: var(--danger); }
+  .ch8-tl-bar .seg.queue   { background: var(--accent); color: var(--text); }
+  .ch8-tl-bar .seg.consume { background: var(--success); }
+  .ch8-tl-bar .seg.idle    { background: var(--border-strong); color: var(--text); }
+
+  /* Concurrency vs Parallelism execution lanes */
+  .ch8-cp {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin: 18px 0;
+  }
+  @media (max-width: 720px) { .ch8-cp { grid-template-columns: 1fr; } }
+  .ch8-cp-panel {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .ch8-cp-panel h5 {
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--primary);
+  }
+  .ch8-cp-lane {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .ch8-cp-axis {
+    font-size: 11px;
+    color: var(--text-faint);
+    text-align: center;
+    margin-top: 6px;
+    border-top: 1px dashed var(--border-strong);
+    padding-top: 4px;
+  }
+  .ch8-cp-bar { height: 14px; position: relative; }
+  .ch8-cp-bar .blk {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 3px;
+  }
+  .ch8-cp-bar .blk.a { background: var(--primary); }
+  .ch8-cp-bar .blk.b { background: var(--accent); }
+  .ch8-cp-bar .blk.c { background: var(--success); }
+
+  /* Process vs Thread memory layout */
+  .ch8-pt {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin: 18px 0;
+  }
+  @media (max-width: 720px) { .ch8-pt { grid-template-columns: 1fr; } }
+  .ch8-pt-box {
+    background: var(--bg-elevated);
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+  .ch8-pt-box h5 {
+    margin: 0 0 10px 0;
+    text-align: center;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--primary);
+  }
+  .ch8-pt-shared {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .ch8-pt-tag {
+    flex: 1;
+    padding: 6px 8px;
+    text-align: center;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid;
+  }
+  .ch8-pt-tag.code  { background: var(--primary-faint); border-color: var(--primary); color: var(--primary); }
+  .ch8-pt-tag.data  { background: var(--accent-faint); border-color: var(--accent); color: var(--accent); }
+  .ch8-pt-tag.files { background: var(--success-faint); border-color: var(--success); color: var(--success); }
+  .ch8-pt-threads { display: flex; gap: 6px; }
+  .ch8-pt-thread {
+    flex: 1;
+    padding: 8px 6px;
+    text-align: center;
+    border: 1px dashed var(--border-strong);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .ch8-pt-thread .stk {
+    display: block;
+    margin: 4px auto;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--danger-faint);
+    border: 2px solid var(--danger);
+  }
+
+  /* Master-Slave / Master-Master diagram */
+  .ch8-repl {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    margin: 18px 0;
+  }
+  @media (max-width: 720px) { .ch8-repl { grid-template-columns: 1fr; } }
+  .ch8-repl-panel {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    text-align: center;
+  }
+  .ch8-repl-panel h5 {
+    margin: 0 0 14px 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--primary);
+  }
+  .ch8-repl-nodes {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .ch8-db {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 78px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    border: 2px solid;
+  }
+  .ch8-db .ic { font-size: 22px; }
+  .ch8-db.master { background: var(--accent-faint); border-color: var(--accent); color: var(--accent); }
+  .ch8-db.slave  { background: var(--primary-faint); border-color: var(--primary); color: var(--primary); }
+  .ch8-repl-arrows {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .ch8-repl-arrows .a-down { color: var(--success); }
+  .ch8-repl-arrows .a-bi   { color: var(--accent); }
+
+  /* Index types card grid */
+  .ch8-idx-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 18px 0;
+  }
+  .ch8-idx {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .ch8-idx h5 {
+    margin: 0 0 6px 0;
+    font-size: 13px;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .ch8-idx p { margin: 0 0 12px 0; font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+  .ch8-idx-vis {
+    height: 64px;
+    background: var(--bg-muted, var(--bg-elevated));
+    border: 1px dashed var(--border-strong);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+  /* B-tree visual */
+  .ch8-btree { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .ch8-btree .row { display: flex; gap: 6px; }
+  .ch8-btree .nd {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--primary-faint);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    font-size: 10px;
+  }
+  /* Hash visual */
+  .ch8-hash { display: flex; align-items: center; gap: 4px; }
+  .ch8-hash .pill {
+    padding: 3px 6px;
+    border-radius: 10px;
+    border: 1px solid var(--accent);
+    background: var(--accent-faint);
+    color: var(--accent);
+    font-size: 10px;
+  }
+  .ch8-hash .arr { color: var(--text-muted); font-size: 11px; }
+  /* Bitmap visual */
+  .ch8-bitmap { display: flex; flex-direction: column; gap: 2px; font-size: 10px; }
+  .ch8-bitmap .bm { display: flex; gap: 2px; }
+  .ch8-bitmap .bm .bit {
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: var(--text-muted);
+    border-radius: 2px;
+  }
+  .ch8-bitmap .bm .bit.on {
+    background: var(--success);
+    color: white;
+    border-color: var(--success);
+  }
+  /* Full-text visual */
+  .ch8-ft { display: flex; flex-direction: column; gap: 4px; }
+  .ch8-ft .tok {
+    display: inline-block;
+    padding: 2px 6px;
+    background: var(--success-faint);
+    color: var(--success);
+    border: 1px solid var(--success);
+    border-radius: 10px;
+    font-size: 10px;
+    margin-right: 4px;
+  }
+
+  /* Normalization vs Denormalization */
+  .ch8-norm {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin: 18px 0;
+  }
+  @media (max-width: 720px) { .ch8-norm { grid-template-columns: 1fr; } }
+  .ch8-norm-panel {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .ch8-norm-panel h5 {
+    margin: 0 0 12px 0;
+    text-align: center;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .ch8-norm-panel.left  h5 { color: var(--primary); }
+  .ch8-norm-panel.right h5 { color: var(--accent); }
+  .ch8-tbl {
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .ch8-tbl-hdr {
+    background: var(--primary);
+    color: white;
+    padding: 5px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+  .ch8-norm-panel.right .ch8-tbl-hdr { background: var(--accent); color: var(--text); }
+  .ch8-tbl ul {
+    list-style: none;
+    margin: 0;
+    padding: 6px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text-muted);
+  }
+  .ch8-norm-join {
+    text-align: center;
+    font-size: 11px;
+    color: var(--success);
+    font-weight: 600;
+    margin: 6px 0;
+  }
+
+  /* Connection pool diagram */
+  .ch8-pool {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr auto;
+    gap: 16px;
+    align-items: center;
+    margin: 18px 0;
+  }
+  @media (max-width: 720px) {
+    .ch8-pool { grid-template-columns: 1fr; gap: 10px; }
+  }
+  .ch8-pool-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ch8-pool-cli {
+    padding: 8px 10px;
+    background: var(--primary-faint);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    border-radius: 6px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .ch8-pool-cli.idle { opacity: 0.4; }
+  .ch8-pool-box {
+    border: 2px dashed var(--accent);
+    background: var(--accent-faint);
+    border-radius: 50px;
+    padding: 16px 14px;
+    text-align: center;
+    position: relative;
+  }
+  .ch8-pool-box .lbl {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .ch8-pool-conn {
+    padding: 6px 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    border-radius: 4px;
+    font-size: 11px;
+    margin: 4px 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .ch8-pool-db {
+    padding: 14px 10px;
+    background: var(--success-faint);
+    border: 2px solid var(--success);
+    color: var(--success);
+    border-radius: 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .ch8-pool-db .ic { display: block; font-size: 24px; margin-bottom: 4px; }
+  .ch8-pool-arr {
+    color: var(--text-muted);
+    font-size: 18px;
+    text-align: center;
+  }
+
+  /* Materialized View */
+  .ch8-matview {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 16px;
+    align-items: center;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin: 18px 0;
+  }
+  @media (max-width: 720px) {
+    .ch8-matview { grid-template-columns: 1fr; }
+    .ch8-matview .arr-h { transform: rotate(90deg); }
+  }
+  .ch8-matview-side h5 {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+  }
+  .ch8-matview-side.src h5 { color: var(--primary); }
+  .ch8-matview-side.dst h5 { color: var(--accent); }
+  .ch8-mini-tbl {
+    background: var(--bg);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    margin: 4px 0;
+  }
+  .ch8-mini-tbl .tbl-hd {
+    font-weight: 700;
+    color: var(--primary);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2px;
+  }
+  .ch8-matview-side.dst .ch8-mini-tbl .tbl-hd { color: var(--accent); }
+  .arr-h {
+    font-size: 28px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+  .arr-h .label {
+    display: block;
+    font-size: 10px;
+    color: var(--success);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Decoupled order processing flow */
+  .ch8-decoupled {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin: 18px 0;
+  }
+  .ch8-decoupled-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    gap: 12px;
+    align-items: center;
+  }
+  @media (max-width: 720px) {
+    .ch8-decoupled-row { grid-template-columns: 1fr; }
+    .ch8-decoupled-row .arr-h { transform: rotate(90deg); }
+  }
+  .ch8-svc {
+    padding: 12px 14px;
+    background: var(--primary-faint);
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .ch8-svc.bus { background: var(--accent-faint); border-color: var(--accent); color: var(--accent); }
+  .ch8-svc .sub { display: block; font-size: 10px; font-weight: 500; color: var(--text-muted); margin-top: 4px; }
+  .ch8-fanout {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ch8-fanout-item {
+    padding: 6px 10px;
+    background: var(--success-faint);
+    border: 1px solid var(--success);
+    color: var(--success);
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* Message broker architecture overview */
+  .ch8-arch {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr;
+    gap: 12px;
+    align-items: center;
+    margin: 18px 0;
+  }
+  @media (max-width: 720px) {
+    .ch8-arch { grid-template-columns: 1fr; }
+    .ch8-arch .arr-h { transform: rotate(90deg); }
+  }
+  .ch8-arch-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ch8-arch-col .lbl {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .ch8-arch-cube {
+    padding: 8px 10px;
+    background: var(--primary-faint);
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    border-radius: 6px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .ch8-arch-cube.topic { background: var(--accent-faint); border-color: var(--accent); color: var(--accent); }
+  .ch8-arch-cube.queue {
+    background: var(--success-faint);
+    border-color: var(--success);
+    color: var(--success);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.2em;
+  }
+  .ch8-arch-cube.cons { background: var(--primary-faint); border-color: var(--primary); color: var(--primary); }
+</style>
 </head>
 <body>
 
 <div class="progress-bar" id="progressBar"></div>
 
 <header class="topbar">
-  <a class="brand" href="index.html">
+  <a class="brand" href="../index.html">
     <span class="brand-icon">SD</span>
     <span>Mastering System Design</span>
   </a>
@@ -294,24 +955,27 @@ SLI: Actual: 93% of requests &lt; 300ms (need improvement!)</code></pre>
       <li><strong>Con:</strong> Adds latency to write operations.</li>
     </ul>
 
-    <div class="archd-seq" aria-label="Write-through caching flow">
-      <div class="archd-seq-step"><span class="num">1</span>App writes — cache and DB are updated together</div>
-      <div class="archd-seq-row">
-        <div class="archd-node is-user"><span class="archd-icon">🧑‍💻</span><span>App</span></div>
-        <div class="archd-seq-arrow right"><span class="label">write(key, value)</span></div>
-        <div class="archd-node is-infra"><span class="archd-icon">⚡</span><span>Cache</span></div>
-        <div class="archd-seq-arrow right"><span class="label">write(key, value)</span></div>
-        <div class="archd-node is-data"><span class="archd-icon">🗄️</span><span>Database</span></div>
+    <figure class="ch8-fig">
+      <div class="archd-seq" aria-label="Write-through caching flow">
+        <div class="archd-seq-step"><span class="num">1</span>App writes — cache and DB are updated together</div>
+        <div class="archd-seq-row">
+          <div class="archd-node is-user"><span class="archd-icon">🧑‍💻</span><span>App</span></div>
+          <div class="archd-seq-arrow right"><span class="label">write(key, value)</span></div>
+          <div class="archd-node is-infra"><span class="archd-icon">⚡</span><span>Cache</span></div>
+          <div class="archd-seq-arrow right"><span class="label">write(key, value)</span></div>
+          <div class="archd-node is-data"><span class="archd-icon">🗄️</span><span>Database</span></div>
+        </div>
+        <div class="archd-seq-step"><span class="num">2</span>Both confirm — strong consistency</div>
+        <div class="archd-seq-row">
+          <div class="archd-node is-user"><span class="archd-icon">🧑‍💻</span><span>App</span></div>
+          <div class="archd-seq-arrow left"><span class="label">ack</span></div>
+          <div class="archd-node is-infra"><span class="archd-icon">⚡</span><span>Cache</span></div>
+          <div class="archd-seq-arrow left"><span class="label">ack</span></div>
+          <div class="archd-node is-data"><span class="archd-icon">🗄️</span><span>Database</span></div>
+        </div>
       </div>
-      <div class="archd-seq-step"><span class="num">2</span>Both confirm — strong consistency</div>
-      <div class="archd-seq-row">
-        <div class="archd-node is-user"><span class="archd-icon">🧑‍💻</span><span>App</span></div>
-        <div class="archd-seq-arrow left"><span class="label">ack</span></div>
-        <div class="archd-node is-infra"><span class="archd-icon">⚡</span><span>Cache</span></div>
-        <div class="archd-seq-arrow left"><span class="label">ack</span></div>
-        <div class="archd-node is-data"><span class="archd-icon">🗄️</span><span>Database</span></div>
-      </div>
-    </div>
+      <figcaption>Write-Through — cache and datastore updated synchronously</figcaption>
+    </figure>
 
 <pre><code class="language-python">def write(key, value):
     cache.set(key, value)  # Update cache
@@ -324,25 +988,28 @@ SLI: Actual: 93% of requests &lt; 300ms (need improvement!)</code></pre>
       <li><strong>Con:</strong> Risk of data loss if cache fails before DB is updated.</li>
     </ul>
 
-    <div class="archd-seq" aria-label="Write-back caching flow">
-      <div class="archd-seq-step"><span class="num">1</span>App writes to cache only — returns immediately</div>
-      <div class="archd-seq-row cols-2">
-        <div class="archd-node is-user"><span class="archd-icon">🧑‍💻</span><span>App</span></div>
-        <div class="archd-seq-arrow right"><span class="label">write(key, value)</span></div>
-        <div class="archd-node is-infra"><span class="archd-icon">⚡</span><span>Cache</span></div>
+    <figure class="ch8-fig">
+      <div class="archd-seq" aria-label="Write-back caching flow">
+        <div class="archd-seq-step"><span class="num">1</span>App writes to cache only — returns immediately</div>
+        <div class="archd-seq-row cols-2">
+          <div class="archd-node is-user"><span class="archd-icon">🧑‍💻</span><span>App</span></div>
+          <div class="archd-seq-arrow right"><span class="label">write(key, value)</span></div>
+          <div class="archd-node is-infra"><span class="archd-icon">⚡</span><span>Cache</span></div>
+        </div>
+        <div class="archd-seq-row cols-2">
+          <div class="archd-node is-user"><span class="archd-icon">🧑‍💻</span><span>App</span></div>
+          <div class="archd-seq-arrow left"><span class="label">ack (fast)</span></div>
+          <div class="archd-node is-infra"><span class="archd-icon">⚡</span><span>Cache</span></div>
+        </div>
+        <div class="archd-seq-step"><span class="num">2</span>Cache flushes to DB asynchronously later</div>
+        <div class="archd-seq-row cols-2">
+          <div class="archd-node is-infra"><span class="archd-icon">⚡</span><span>Cache</span></div>
+          <div class="archd-seq-arrow right"><span class="label">async write</span></div>
+          <div class="archd-node is-data"><span class="archd-icon">🗄️</span><span>Database</span></div>
+        </div>
       </div>
-      <div class="archd-seq-row cols-2">
-        <div class="archd-node is-user"><span class="archd-icon">🧑‍💻</span><span>App</span></div>
-        <div class="archd-seq-arrow left"><span class="label">ack (fast)</span></div>
-        <div class="archd-node is-infra"><span class="archd-icon">⚡</span><span>Cache</span></div>
-      </div>
-      <div class="archd-seq-step"><span class="num">2</span>Cache flushes to DB asynchronously later</div>
-      <div class="archd-seq-row cols-2">
-        <div class="archd-node is-infra"><span class="archd-icon">⚡</span><span>Cache</span></div>
-        <div class="archd-seq-arrow right"><span class="label">async write</span></div>
-        <div class="archd-node is-data"><span class="archd-icon">🗄️</span><span>Database</span></div>
-      </div>
-    </div>
+      <figcaption>Write-Back (Write-Behind) — cache acks fast, persists to DB later</figcaption>
+    </figure>
 
 <pre><code class="language-python">def write(key, value):
     cache.set(key, value)
@@ -356,26 +1023,29 @@ SLI: Actual: 93% of requests &lt; 300ms (need improvement!)</code></pre>
       <li><strong>Con:</strong> First access is slow ("cold" cache).</li>
     </ul>
 
-    <div class="archd-seq" aria-label="Cache-aside flow">
-      <div class="archd-seq-step"><span class="num">1</span>App reads — check cache first</div>
-      <div class="archd-seq-row cols-2">
-        <div class="archd-node is-user"><span class="archd-icon">🧑‍💻</span><span>App</span></div>
-        <div class="archd-seq-arrow right"><span class="label">get(key)</span></div>
-        <div class="archd-node is-infra"><span class="archd-icon">⚡</span><span>Cache</span></div>
+    <figure class="ch8-fig">
+      <div class="archd-seq" aria-label="Cache-aside flow">
+        <div class="archd-seq-step"><span class="num">1</span>App reads — check cache first</div>
+        <div class="archd-seq-row cols-2">
+          <div class="archd-node is-user"><span class="archd-icon">🧑‍💻</span><span>App</span></div>
+          <div class="archd-seq-arrow right"><span class="label">get(key)</span></div>
+          <div class="archd-node is-infra"><span class="archd-icon">⚡</span><span>Cache</span></div>
+        </div>
+        <div class="archd-seq-step"><span class="num">2</span>Cache miss — fall through to DB</div>
+        <div class="archd-seq-row cols-2">
+          <div class="archd-node is-user"><span class="archd-icon">🧑‍💻</span><span>App</span></div>
+          <div class="archd-seq-arrow right"><span class="label">get(key) — miss</span></div>
+          <div class="archd-node is-data"><span class="archd-icon">🗄️</span><span>Database</span></div>
+        </div>
+        <div class="archd-seq-step"><span class="num">3</span>App populates cache for next time</div>
+        <div class="archd-seq-row cols-2">
+          <div class="archd-node is-user"><span class="archd-icon">🧑‍💻</span><span>App</span></div>
+          <div class="archd-seq-arrow right"><span class="label">set(key, value)</span></div>
+          <div class="archd-node is-infra"><span class="archd-icon">⚡</span><span>Cache</span></div>
+        </div>
       </div>
-      <div class="archd-seq-step"><span class="num">2</span>Cache miss — fall through to DB</div>
-      <div class="archd-seq-row cols-2">
-        <div class="archd-node is-user"><span class="archd-icon">🧑‍💻</span><span>App</span></div>
-        <div class="archd-seq-arrow right"><span class="label">get(key) — miss</span></div>
-        <div class="archd-node is-data"><span class="archd-icon">🗄️</span><span>Database</span></div>
-      </div>
-      <div class="archd-seq-step"><span class="num">3</span>App populates cache for next time</div>
-      <div class="archd-seq-row cols-2">
-        <div class="archd-node is-user"><span class="archd-icon">🧑‍💻</span><span>App</span></div>
-        <div class="archd-seq-arrow right"><span class="label">set(key, value)</span></div>
-        <div class="archd-node is-infra"><span class="archd-icon">⚡</span><span>Cache</span></div>
-      </div>
-    </div>
+      <figcaption>Lazy Loading / Cache-Aside — app fetches on miss and populates cache</figcaption>
+    </figure>
 
 <pre><code class="language-python">def read(key):
     value = cache.get(key)
@@ -393,6 +1063,57 @@ SLI: Actual: 93% of requests &lt; 300ms (need improvement!)</code></pre>
 
     <h3>Cache Eviction Policies</h3>
     <p>Caches have limited memory, so old or less useful data must be evicted.</p>
+
+    <figure class="ch8-fig">
+      <div class="ch8-evict-grid" aria-label="Cache eviction strategies visualized">
+        <div class="ch8-evict">
+          <h5>LRU — Least Recently Used</h5>
+          <div class="ch8-evict-row">
+            <div class="ch8-evict-cell">1m ago</div>
+            <div class="ch8-evict-cell">30m</div>
+            <div class="ch8-evict-cell">1h</div>
+            <div class="ch8-evict-cell">2h</div>
+            <div class="ch8-evict-cell evict">10h ✕</div>
+          </div>
+          <div class="ch8-evict-cap">Oldest access wins eviction</div>
+        </div>
+        <div class="ch8-evict">
+          <h5>LFU — Least Frequently Used</h5>
+          <div class="ch8-evict-row">
+            <div class="ch8-evict-cell evict">100× ✕</div>
+            <div class="ch8-evict-cell">300×</div>
+            <div class="ch8-evict-cell">500×</div>
+            <div class="ch8-evict-cell">1000×</div>
+            <div class="ch8-evict-cell">2000×</div>
+          </div>
+          <div class="ch8-evict-cap">Fewest hits wins eviction</div>
+        </div>
+        <div class="ch8-evict">
+          <h5>FIFO — First In, First Out</h5>
+          <div class="ch8-evict-row">
+            <div class="ch8-evict-cell evict">#1 ✕</div>
+            <div class="ch8-evict-cell">#2</div>
+            <div class="ch8-evict-cell">#3</div>
+            <div class="ch8-evict-cell">#4</div>
+            <div class="ch8-evict-cell fresh">#5 new</div>
+          </div>
+          <div class="ch8-evict-cap">Insertion order, ignores access</div>
+        </div>
+        <div class="ch8-evict">
+          <h5>TTL — Time To Live</h5>
+          <div class="ch8-evict-row">
+            <div class="ch8-evict-cell">60s</div>
+            <div class="ch8-evict-cell">45s</div>
+            <div class="ch8-evict-cell">30s</div>
+            <div class="ch8-evict-cell">5s</div>
+            <div class="ch8-evict-cell evict">0s ✕</div>
+          </div>
+          <div class="ch8-evict-cap">Expires after fixed lifespan</div>
+        </div>
+      </div>
+      <figcaption>Cache Eviction Strategies — who gets removed when the cache is full</figcaption>
+    </figure>
+
     <div class="table-wrapper">
       <table>
         <thead>
@@ -527,6 +1248,56 @@ app.listen(3000, () => console.log("Server running on port 3000"));</code></pre>
     <h3>Why Use Asynchronous Messaging?</h3>
     <p>Traditional synchronous calls force producers (e.g., APIs) to wait for consumers (e.g., email sender, payment processor) to finish their work. This <strong>tightly couples</strong> services and limits scalability.</p>
 
+    <figure class="ch8-fig">
+      <div class="ch8-syncasync" aria-label="Synchronous versus asynchronous timing comparison">
+        <div class="ch8-syncasync-col sync">
+          <h5>🔴 Synchronous — Producer waits</h5>
+          <div class="ch8-tl-row">
+            <span class="ch8-tl-label">Producer</span>
+            <div class="ch8-tl-bar">
+              <div class="seg work" style="left:0; width:18%">work</div>
+              <div class="seg wait" style="left:18%; width:64%">⏳ blocked waiting</div>
+              <div class="seg work" style="left:82%; width:18%">done</div>
+            </div>
+          </div>
+          <div class="ch8-tl-row">
+            <span class="ch8-tl-label">Consumer</span>
+            <div class="ch8-tl-bar">
+              <div class="seg idle" style="left:0; width:20%">idle</div>
+              <div class="seg consume" style="left:20%; width:60%">processing…</div>
+              <div class="seg idle" style="left:80%; width:20%">idle</div>
+            </div>
+          </div>
+          <p style="font-size:11.5px;color:var(--text-muted);margin:8px 0 0">Tightly coupled. Producer's response time = work + consumer time.</p>
+        </div>
+        <div class="ch8-syncasync-col async">
+          <h5>🟢 Asynchronous — Fire and forget</h5>
+          <div class="ch8-tl-row">
+            <span class="ch8-tl-label">Producer</span>
+            <div class="ch8-tl-bar">
+              <div class="seg work" style="left:0; width:18%">work</div>
+              <div class="seg queue" style="left:18%; width:8%">📤</div>
+              <div class="seg idle" style="left:26%; width:74%">free for next request</div>
+            </div>
+          </div>
+          <div class="ch8-tl-row">
+            <span class="ch8-tl-label">Queue</span>
+            <div class="ch8-tl-bar">
+              <div class="seg queue" style="left:26%; width:14%">✉ ✉ ✉</div>
+            </div>
+          </div>
+          <div class="ch8-tl-row">
+            <span class="ch8-tl-label">Consumer</span>
+            <div class="ch8-tl-bar">
+              <div class="seg consume" style="left:40%; width:55%">processes at own pace</div>
+            </div>
+          </div>
+          <p style="font-size:11.5px;color:var(--text-muted);margin:8px 0 0">Decoupled. Producer returns immediately; consumer scales independently.</p>
+        </div>
+      </div>
+      <figcaption>Synchronous vs Asynchronous — the producer's blocking time tells the story</figcaption>
+    </figure>
+
     <p><strong>Asynchronous messaging decouples these components:</strong></p>
     <ul>
       <li><strong>Loose coupling:</strong> Producers and consumers don't need to know about each other.</li>
@@ -537,6 +1308,36 @@ app.listen(3000, () => console.log("Server running on port 3000"));</code></pre>
     </ul>
 
     <h3>Core Concepts</h3>
+
+    <figure class="ch8-fig">
+      <div class="ch8-arch" aria-label="Producers, topic, queue, consumers architecture">
+        <div class="ch8-arch-col">
+          <div class="lbl">Producers</div>
+          <div class="ch8-arch-cube">📤 Order Svc</div>
+          <div class="ch8-arch-cube">📤 Catalog Svc</div>
+          <div class="ch8-arch-cube">📤 Inventory Svc</div>
+        </div>
+        <div class="arr-h">→<span class="label">publish</span></div>
+        <div class="ch8-arch-col">
+          <div class="lbl">Topic</div>
+          <div class="ch8-arch-cube topic">📡 events</div>
+        </div>
+        <div class="arr-h">→<span class="label">route</span></div>
+        <div class="ch8-arch-col">
+          <div class="lbl">Message Queue</div>
+          <div class="ch8-arch-cube queue">✉ ✉ ✉ ✉</div>
+          <div class="ch8-arch-cube queue">✉ ✉ ✉ ✉</div>
+        </div>
+        <div class="arr-h">→<span class="label">deliver</span></div>
+        <div class="ch8-arch-col">
+          <div class="lbl">Consumers</div>
+          <div class="ch8-arch-cube cons">📥 Basket</div>
+          <div class="ch8-arch-cube cons">📥 Billing</div>
+        </div>
+      </div>
+      <figcaption>Messaging Architecture — producers publish to topics; queues buffer for consumers</figcaption>
+    </figure>
+
     <div class="table-wrapper">
       <table>
         <thead>
@@ -597,6 +1398,24 @@ app.listen(3000, () => console.log("Server running on port 3000"));</code></pre>
     </div>
 
     <h3>Real-World Example: Decoupled Order Processing</h3>
+
+    <figure class="ch8-fig">
+      <div class="ch8-decoupled" aria-label="Decoupled price update propagation">
+        <div class="ch8-decoupled-row">
+          <div class="ch8-svc">🛒 Catalog Service<span class="sub">1. UpdatePrice<br>2. DB write<br>3. Publish event</span></div>
+          <div class="arr-h">→<span class="label">PriceUpdated</span></div>
+          <div class="ch8-svc bus">📡 Event Bus<span class="sub">Pub/Sub channel<br>Kafka / RabbitMQ</span></div>
+          <div class="arr-h">→<span class="label">fan-out</span></div>
+          <div class="ch8-fanout">
+            <div class="ch8-fanout-item">🧺 Basket Service — update cart items</div>
+            <div class="ch8-fanout-item">💳 Billing Service — recalc invoices</div>
+            <div class="ch8-fanout-item">📊 Analytics — log price change</div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Decoupled Architecture — one event triggers many independent reactions</figcaption>
+    </figure>
+
     <ol>
       <li><strong>Catalog Service</strong> updates a product price.</li>
       <li>After DB update, it publishes a <code>PriceUpdated</code> event to the broker.</li>
@@ -788,6 +1607,57 @@ await consumer.run({
     <p>Unlocking performance often means handling <strong>many tasks at once</strong> — but how?</p>
 
     <h3>Concurrency vs. Parallelism</h3>
+
+    <figure class="ch8-fig">
+      <div class="ch8-cp" aria-label="Concurrency versus parallelism timing">
+        <div class="ch8-cp-panel">
+          <h5>Concurrency — Interleaved on one CPU</h5>
+          <div class="ch8-cp-lane">
+            <span class="ch8-tl-label">Task A</span>
+            <div class="ch8-cp-bar">
+              <div class="blk a" style="left:0; width:12%"></div>
+              <div class="blk a" style="left:40%; width:14%"></div>
+              <div class="blk a" style="left:78%; width:10%"></div>
+            </div>
+          </div>
+          <div class="ch8-cp-lane">
+            <span class="ch8-tl-label">Task B</span>
+            <div class="ch8-cp-bar">
+              <div class="blk b" style="left:14%; width:12%"></div>
+              <div class="blk b" style="left:56%; width:18%"></div>
+            </div>
+          </div>
+          <div class="ch8-cp-lane">
+            <span class="ch8-tl-label">Task C</span>
+            <div class="ch8-cp-bar">
+              <div class="blk c" style="left:28%; width:10%"></div>
+              <div class="blk c" style="left:90%; width:8%"></div>
+            </div>
+          </div>
+          <div class="ch8-cp-axis">execution time →</div>
+          <p style="font-size:11.5px;color:var(--text-muted);margin:8px 0 0">Tasks share a single core via context-switching.</p>
+        </div>
+        <div class="ch8-cp-panel">
+          <h5>Parallelism — True simultaneous on N cores</h5>
+          <div class="ch8-cp-lane">
+            <span class="ch8-tl-label">Core 1: A</span>
+            <div class="ch8-cp-bar"><div class="blk a" style="left:0; width:100%"></div></div>
+          </div>
+          <div class="ch8-cp-lane">
+            <span class="ch8-tl-label">Core 2: B</span>
+            <div class="ch8-cp-bar"><div class="blk b" style="left:0; width:100%"></div></div>
+          </div>
+          <div class="ch8-cp-lane">
+            <span class="ch8-tl-label">Core 3: C</span>
+            <div class="ch8-cp-bar"><div class="blk c" style="left:0; width:100%"></div></div>
+          </div>
+          <div class="ch8-cp-axis">execution time →</div>
+          <p style="font-size:11.5px;color:var(--text-muted);margin:8px 0 0">All tasks progress at the same wall-clock moment.</p>
+        </div>
+      </div>
+      <figcaption>Concurrency vs Parallelism — interleaving on one core vs simultaneous on many</figcaption>
+    </figure>
+
     <div class="table-wrapper">
       <table>
         <thead>
@@ -855,6 +1725,43 @@ if __name__ == '__main__':
 +------------------------------+     +--------------------------+</code></pre>
 
     <h3>Processes vs. Threads</h3>
+
+    <figure class="ch8-fig">
+      <div class="ch8-pt" aria-label="Single-threaded versus multi-threaded process memory layout">
+        <div class="ch8-pt-box">
+          <h5>Single-Threaded Process</h5>
+          <div class="ch8-pt-shared">
+            <div class="ch8-pt-tag code">Code</div>
+            <div class="ch8-pt-tag data">Data</div>
+            <div class="ch8-pt-tag files">Files</div>
+          </div>
+          <div class="ch8-pt-threads">
+            <div class="ch8-pt-thread">
+              Registers + Stack
+              <span class="stk"></span>
+              Thread 1
+            </div>
+          </div>
+          <p style="font-size:11.5px;color:var(--text-muted);text-align:center;margin:10px 0 0">One execution flow. Heavy to spawn another process.</p>
+        </div>
+        <div class="ch8-pt-box">
+          <h5>Multi-Threaded Process</h5>
+          <div class="ch8-pt-shared">
+            <div class="ch8-pt-tag code">Code</div>
+            <div class="ch8-pt-tag data">Data</div>
+            <div class="ch8-pt-tag files">Files</div>
+          </div>
+          <div class="ch8-pt-threads">
+            <div class="ch8-pt-thread">Registers + Stack<span class="stk"></span>Thread 1</div>
+            <div class="ch8-pt-thread">Registers + Stack<span class="stk"></span>Thread 2</div>
+            <div class="ch8-pt-thread">Registers + Stack<span class="stk"></span>Thread 3</div>
+          </div>
+          <p style="font-size:11.5px;color:var(--text-muted);text-align:center;margin:10px 0 0">Threads share code/data/files; only stack &amp; registers are per-thread.</p>
+        </div>
+      </div>
+      <figcaption>Process vs Thread Memory — what's shared, what's isolated</figcaption>
+    </figure>
+
     <div class="table-wrapper">
       <table>
         <thead>
@@ -1051,6 +1958,37 @@ def increment():
       <li><strong>Master-Master Replication:</strong> Multiple primaries handle reads and writes, offering redundancy.</li>
     </ul>
 
+    <figure class="ch8-fig">
+      <div class="ch8-repl" aria-label="Master-slave versus master-master replication">
+        <div class="ch8-repl-panel">
+          <h5>Master-Slave Replication</h5>
+          <div class="ch8-repl-nodes">
+            <div class="ch8-db master"><span class="ic">🗄️</span>Master<br><span style="font-size:10px;font-weight:500;color:var(--text-muted)">writes</span></div>
+          </div>
+          <div class="ch8-repl-arrows"><span class="a-down">↓ replicate ↓ replicate ↓ replicate</span></div>
+          <div class="ch8-repl-nodes">
+            <div class="ch8-db slave"><span class="ic">🗄️</span>Slave 1<br><span style="font-size:10px;font-weight:500;color:var(--text-muted)">reads</span></div>
+            <div class="ch8-db slave"><span class="ic">🗄️</span>Slave 2<br><span style="font-size:10px;font-weight:500;color:var(--text-muted)">reads</span></div>
+            <div class="ch8-db slave"><span class="ic">🗄️</span>Slave 3<br><span style="font-size:10px;font-weight:500;color:var(--text-muted)">reads</span></div>
+          </div>
+          <p style="font-size:11.5px;color:var(--text-muted);margin:10px 0 0">Single writer; slaves scale reads. Simple, eventually consistent.</p>
+        </div>
+        <div class="ch8-repl-panel">
+          <h5>Master-Master Replication</h5>
+          <div class="ch8-repl-nodes">
+            <div class="ch8-db master"><span class="ic">🗄️</span>Master A<br><span style="font-size:10px;font-weight:500;color:var(--text-muted)">read+write</span></div>
+            <div class="ch8-db master"><span class="ic">🗄️</span>Master B<br><span style="font-size:10px;font-weight:500;color:var(--text-muted)">read+write</span></div>
+          </div>
+          <div class="ch8-repl-arrows"><span class="a-bi">⇄ bi-directional sync ⇄</span></div>
+          <div class="ch8-repl-nodes">
+            <div class="ch8-db master"><span class="ic">🗄️</span>Master C<br><span style="font-size:10px;font-weight:500;color:var(--text-muted)">read+write</span></div>
+          </div>
+          <p style="font-size:11.5px;color:var(--text-muted);margin:10px 0 0">All nodes accept writes; HA &amp; failover — but watch for conflicts.</p>
+        </div>
+      </div>
+      <figcaption>Master-Slave vs Master-Master — single-writer scale-out vs multi-writer HA</figcaption>
+    </figure>
+
     <div class="callout callout-tip">
       <span class="callout-icon">💡</span>
       <div class="callout-content">
@@ -1138,6 +2076,55 @@ CREATE TABLE orders_2023 PARTITION OF orders
       <li><strong>Bitmap:</strong> Efficient for columns with few unique values (low cardinality).</li>
     </ul>
 
+    <figure class="ch8-fig">
+      <div class="ch8-idx-grid" aria-label="Index types visualized">
+        <div class="ch8-idx">
+          <h5>🌳 B-Tree</h5>
+          <p>Sorted balanced tree — range scans &amp; equality. Default in Postgres/MySQL.</p>
+          <div class="ch8-idx-vis">
+            <div class="ch8-btree">
+              <div class="row"><span class="nd">15</span></div>
+              <div class="row"><span class="nd">5,10</span><span class="nd">20,25</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="ch8-idx">
+          <h5>#️⃣ Hash</h5>
+          <p>Hash function → bucket. O(1) equality lookups only — no ranges.</p>
+          <div class="ch8-idx-vis">
+            <div class="ch8-hash">
+              <span class="pill">key</span>
+              <span class="arr">→</span>
+              <span class="pill">h(x)</span>
+              <span class="arr">→</span>
+              <span class="pill">bucket</span>
+            </div>
+          </div>
+        </div>
+        <div class="ch8-idx">
+          <h5>🔎 Full-Text</h5>
+          <p>Inverted index of tokens. Powers search across large text blocks.</p>
+          <div class="ch8-idx-vis">
+            <div class="ch8-ft">
+              <div><span class="tok">fast</span><span class="tok">cache</span></div>
+              <div><span class="tok">redis</span><span class="tok">queue</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="ch8-idx">
+          <h5>🗂️ Bitmap</h5>
+          <p>One bit per row per value. Excellent for low-cardinality columns.</p>
+          <div class="ch8-idx-vis">
+            <div class="ch8-bitmap">
+              <div class="bm"><span class="bit on">1</span><span class="bit">0</span><span class="bit on">1</span><span class="bit">0</span><span class="bit on">1</span></div>
+              <div class="bm"><span class="bit">0</span><span class="bit on">1</span><span class="bit">0</span><span class="bit on">1</span><span class="bit">0</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <figcaption>Index Types — pick the right structure for the access pattern</figcaption>
+    </figure>
+
     <p><strong>When to use:</strong></p>
     <ul>
       <li><strong>Read-heavy operations:</strong> Indexes speed up query performance.</li>
@@ -1165,6 +2152,46 @@ CREATE INDEX idx_user_email ON users(email);</code></pre>
     </div>
 
     <h3>5. Normalization vs. Denormalization</h3>
+
+    <figure class="ch8-fig">
+      <div class="ch8-norm" aria-label="Normalized versus denormalized schema">
+        <div class="ch8-norm-panel left">
+          <h5>Normalized — Two related tables</h5>
+          <div class="ch8-tbl">
+            <div class="ch8-tbl-hdr">MEMBER</div>
+            <ul>
+              <li><strong>email</strong> (PK)</li>
+              <li>password</li>
+              <li>fname, lname, phone</li>
+            </ul>
+          </div>
+          <div class="ch8-norm-join">↕ JOIN on email</div>
+          <div class="ch8-tbl">
+            <div class="ch8-tbl-hdr">VISIT</div>
+            <ul>
+              <li><strong>id</strong> (PK)</li>
+              <li>member$email (FK)</li>
+              <li>date_time_in, date_time_out</li>
+            </ul>
+          </div>
+          <p style="font-size:11.5px;color:var(--text-muted);margin:8px 0 0;text-align:center">No duplication — joins on every read.</p>
+        </div>
+        <div class="ch8-norm-panel right">
+          <h5>Denormalized — One wide table</h5>
+          <div class="ch8-tbl">
+            <div class="ch8-tbl-hdr">MEMBERVISIT</div>
+            <ul>
+              <li><strong>id</strong> (PK)</li>
+              <li>email, password</li>
+              <li>fname, lname, phone</li>
+              <li>date_time_in, date_time_out</li>
+            </ul>
+          </div>
+          <p style="font-size:11.5px;color:var(--text-muted);margin:8px 0 0;text-align:center">Member fields duplicated per visit — no joins, fast reads.</p>
+        </div>
+      </div>
+      <figcaption>Normalized vs Denormalized — write-friendly OLTP vs read-friendly OLAP</figcaption>
+    </figure>
 
     <h4>Normalization</h4>
     <ul>
@@ -1213,6 +2240,27 @@ FROM orders_denormalized;</code></pre>
 
     <h3>6. Connection Pooling</h3>
     <p><strong>Definition:</strong> A technique to manage database connections efficiently by <strong>reusing established connections</strong> instead of creating new ones each time.</p>
+
+    <figure class="ch8-fig">
+      <div class="ch8-pool" aria-label="Connection pool sharing DB connections among clients">
+        <div class="ch8-pool-col">
+          <div class="ch8-pool-cli">👤 Client 1</div>
+          <div class="ch8-pool-cli">👤 Client 2</div>
+          <div class="ch8-pool-cli idle">👤 Client 3</div>
+          <div class="ch8-pool-cli">👤 Client 4</div>
+        </div>
+        <div class="ch8-pool-arr">⇄</div>
+        <div class="ch8-pool-box">
+          <div class="lbl">Connection Pool</div>
+          <div class="ch8-pool-conn">conn A</div>
+          <div class="ch8-pool-conn">conn B</div>
+          <div class="ch8-pool-conn">conn C</div>
+        </div>
+        <div class="ch8-pool-arr">⇄</div>
+        <div class="ch8-pool-db"><span class="ic">🗄️</span>Database</div>
+      </div>
+      <figcaption>Connection Pool — N clients share M long-lived connections to the DB</figcaption>
+    </figure>
 
     <p><strong>Why use it?</strong></p>
     <ul>
@@ -1270,6 +2318,37 @@ WHERE o.user_id = 123;</code></pre>
 
     <h3>8. Materialized Views</h3>
     <p><strong>Definition:</strong> A precomputed query result stored as a table.</p>
+
+    <figure class="ch8-fig">
+      <div class="ch8-matview" aria-label="Materialized view derived from source tables">
+        <div class="ch8-matview-side src">
+          <h5>Source Tables (truth)</h5>
+          <div class="ch8-mini-tbl">
+            <div class="tbl-hd">orders</div>
+            <div>1 → A</div><div>2 → B</div>
+          </div>
+          <div class="ch8-mini-tbl">
+            <div class="tbl-hd">items</div>
+            <div>30 Shirts 120</div><div>31 Pants 143</div>
+          </div>
+          <div class="ch8-mini-tbl">
+            <div class="tbl-hd">order_items</div>
+            <div>1 · 30 · qty 2</div><div>1 · 31 · qty 3</div><div>2 · 30 · qty 2</div>
+          </div>
+        </div>
+        <div class="arr-h">→<span class="label">precompute</span></div>
+        <div class="ch8-matview-side dst">
+          <h5>Materialized View (read-only)</h5>
+          <div class="ch8-mini-tbl">
+            <div class="tbl-hd">sales_summary</div>
+            <div>30 · Shirts · total 4</div>
+            <div>31 · Pants · total 3</div>
+          </div>
+          <p style="font-size:11.5px;color:var(--text-muted);margin:6px 0 0;text-align:center">Refresh on schedule; query in O(1).</p>
+        </div>
+      </div>
+      <figcaption>Materialized View — precomputed snapshot of an expensive query</figcaption>
+    </figure>
 
     <p><strong>Benefits:</strong></p>
     <ul>
@@ -1572,7 +2651,7 @@ results = db.query("""
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
-<script src="assets/system-design.js"></script>
+<script src="../assets/system-design.js"></script>
 
 </body>
 </html>
