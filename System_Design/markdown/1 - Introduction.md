@@ -1,6 +1,6 @@
 # Mastering System Design: From Basics to Cracking Interviews
 
-*By Rahul Rajat Singh*
+*By Charikshith*
 
 ---
 
